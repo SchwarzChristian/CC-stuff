@@ -1,0 +1,63 @@
+-- class Window
+Window = {}
+Window.__index = Window
+
+function Window.new(title)
+	local tmp = {}
+	setmetatable(tmp, Window)
+	tmp.title = title or ""
+	tmp.mon = peripheral.wrap("top")
+	tmp.scale = 0.50
+	tmp.width, tmp.height = tmp.mon.getSize()
+	return tmp
+end
+
+function Window:initMon()
+	self.mon.setTextColor(colors.lime);
+	self.mon.setTextScale(self.scale);
+	self.width = self.width * 2 - 1;
+end
+
+function Window:nl()
+	local x, y = self.mon.getCursorPos();
+	self.mon.setCursorPos(1, y + 1);
+end
+
+function Window:clear()
+	self.mon.clear();
+	self.mon.setCursorPos(1, 1);
+end
+
+function Window:vline()
+	self.mon.write("+");
+	for i = 1, self.width - 2 do self.mon.write("-"); end;
+	self.mon.write("+");
+	self:nl();
+end
+
+-- end class Window
+
+version = "1.0"
+
+function text(s,first)
+	first = first or 1;
+--	write(s.."\n");
+	mon.write("+ ");
+	for i = first, width - 5 + first do 
+--		write(i.."\n");
+		if (i <= #s) then
+			mon.write(s:sub(i, i));
+		else
+			mon.write(" "); 
+		end
+	end
+
+	mon.write(" +");    
+	nl();
+	
+	if (#s - first + 1 > width - 4) then
+		text(s, first + width - 4);
+	end
+end
+
+write("loaded API: window - " .. version)

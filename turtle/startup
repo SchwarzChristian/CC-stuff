@@ -1,0 +1,12 @@
+rednet.open("right");
+
+while true do
+	local id, msg = rednet.receive();
+	write(id .. ": " ..msg .. "\n")
+	if (msg == "helo") then
+		rednet.send(id, "Mining Turtle");
+	else
+		loadstring(msg)()
+		rednet.send(id, "ACK");
+	end
+end

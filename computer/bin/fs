@@ -1,0 +1,38 @@
+local path = "/";
+local files;
+
+window.init();
+
+function draw(p)
+	window.clear();
+	window.vline();
+	window.text(p);
+	window.vline();
+	window.text("./");
+	window.text("../");
+	files = fs.list(path);
+	table.sort(files);
+	for _, s in ipairs(files) do
+		if fs.isDir(path .. s) then
+			s = s .. "/";
+		end
+		window.text(s);
+	end
+	window.vline();
+end
+
+while true do
+	draw(path);
+	local x, y;
+	_, _, x, y = os.pullEvent("monitor_touch")
+	y = y - 5;
+	if (y == 0 and #path > 1) then
+		path = string.sub(path, 1, -string.find(string.reverse(path), "/", 2));
+	elseif (y > 0 and y <= #files) then
+		if (fs.isDir(path .. files[y])) then
+			path = path .. files[y] .. "/";
+		else
+			shell.run(path .. files[y]);
+		end
+	end
+end
