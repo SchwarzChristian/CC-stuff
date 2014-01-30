@@ -8,19 +8,17 @@ function Window.new(title)
 	tmp.title = title or ""
 	tmp.mon = peripheral.wrap("top")
 	tmp.scale = 0.50
-	tmp.width, tmp.height = tmp.mon.getSize()
+	tmp.width, tmp.height = 49, 15
+	tmp.x, tmp.y = 1, 1
+	tmp.mon.setTextColor(colors.lime);
+	tmp.mon.setTextScale(tmp.scale);
 	return tmp
 end
 
-function Window:initMon()
-	self.mon.setTextColor(colors.lime);
-	self.mon.setTextScale(self.scale);
-	self.width = self.width * 2 - 1;
-end
-
-function Window:nl()
-	local x, y = self.mon.getCursorPos();
-	self.mon.setCursorPos(1, y + 1);
+function Window:nl(x)
+	local y
+	_, y = self.mon.getCursorPos();
+	self.mon.setCursorPos(x or 1, y + 1);
 end
 
 function Window:clear()
@@ -28,36 +26,51 @@ function Window:clear()
 	self.mon.setCursorPos(1, 1);
 end
 
-function Window:vline()
-	self.mon.write("+");
-	for i = 1, self.width - 2 do self.mon.write("-"); end;
-	self.mon.write("+");
-	self:nl();
-end
+function Window:show()
+	self.mon.setCursorPos(self.x, self.y)
+	self:vline()
 
--- end class Window
-
-version = "1.0"
-
-function text(s,first)
-	first = first or 1;
---	write(s.."\n");
-	mon.write("+ ");
-	for i = first, width - 5 + first do 
---		write(i.."\n");
-		if (i <= #s) then
-			mon.write(s:sub(i, i));
+	self.mon.write("| ")
+	for i = 1, self.width - 2 do 
+		if (i <= #self.title) then
+			self.mon.write(self.title:sub(i, i))
 		else
-			mon.write(" "); 
+			self.mon.write(" ")
 		end
 	end
-
-	mon.write(" +");    
-	nl();
+	self.mon.write(" |")
+	self:nl(x)
 	
-	if (#s - first + 1 > width - 4) then
-		text(s, first + width - 4);
+	self:vline()
+	for _ = 1, self.height do
+		self.mon.write("|")
+		for _ = 1, self.width do
+			self.mon.write(" ")
+		end
+		self.mon.write("|")
+		self:nl(x)
 	end
+	self:vline()
 end
 
-write("loaded API: window - " .. version)
+function Window:vline()
+	self.mon.write("+");
+	for i = 1, self.width do self.mon.write("-") end
+	self.mon.write("+")
+	self:nl(x)
+end
+-- end class Window
+
+-- main
+version = "1.0"
+
+new = Window.new
+
+write("loaded API: window - " .. version .. "\n")
+
+w = new("test")
+
+w:show()
+
+os.pullEvent("monitor_touch")
+w.mon:clear()
