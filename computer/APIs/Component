@@ -1,0 +1,8 @@
+-- class Component
+
+Window = {}
+Window.__index = Window
+
+function new()
+
+end

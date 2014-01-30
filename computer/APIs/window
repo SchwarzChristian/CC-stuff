@@ -9,7 +9,7 @@ function new(out, title)
 	tmp.mon = out
 	tmp.width, tmp.height = 49, 15
 	tmp.x, tmp.y = 1, 1
-	tmp.mon.setTextColor(colors.lime);
+	textColor, bgColor = colors.lime, colors.red
 	return tmp
 end
 
@@ -24,7 +24,7 @@ function Window:clear()
 	self.mon.setCursorPos(1, 1);
 end
 
-function Window:show()
+function Window:draw()
 	function Window:vline()
 		self.mon.write("+");
 		for i = 1, self.width do self.mon.write("-") end
@@ -32,7 +32,8 @@ function Window:show()
 		self:nl(self.x)
 	end
 
-	self:clear()
+	self.mon.setTextColor(textColor)
+	self.mon.setBackgroundColor(bgColor)
 	self.mon.setCursorPos(self.x, self.y)
 	self:vline()
 
@@ -57,10 +58,13 @@ function Window:show()
 		self:nl(self.x)
 	end
 	self:vline()
+	self.onDraw and self:onDraw()
 end
 
 function Window:loop()
+	self.onStart and self:onStart()
 	while not self.exit do
+		self:draw()
 		e, p1, p2, p3, p4, p5 = os.pullEvent()
 		if (e == "monitor_touch") then
 			if (self.onTouch and self:onTouch(p1, p2, p3)) then
@@ -72,6 +76,7 @@ function Window:loop()
 			end
 		end
 	end
+	self.onEnd and self:onEnd()
 	self.exit = nil
 end
 -- end class Window
@@ -93,7 +98,6 @@ do -- main
 	end
 
 	w.mon.setTextScale(0.5);
-	w:show()
 	w:loop()
 	w.mon:clear()
 end
