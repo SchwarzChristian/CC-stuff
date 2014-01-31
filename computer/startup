@@ -1,3 +1,9 @@
-os.loadAPI("/APIs/window");
+write("loading APIs...\n")
+os.loadAPI("/APIs/Window");
+os.loadAPI("/APIs/Component");
+os.loadAPI("/APIs/Label");
+write("set path...\n")
 shell.setPath("/bin:" .. shell.path());
+write(shell.path())
+write("\ndone.\n")
 shell.run("fs");

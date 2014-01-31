@@ -1,8 +1,21 @@
+version = "1.0"
+
 -- class Component
 
-Window = {}
-Window.__index = Window
+Component = {}
+Component.__index = Component
 
 function new()
-
+	local tmp = {}
+	setmetatable(tmp, Component)
+	tmp.x, tmp.y = 0, 0
+	tmp.width, tmp.height = 5, 1
+	return tmp
 end
+
+function Component:setParent(parent)
+	self.parent = parent
+end
+-- end class
+
+write("loaded API: Component - " .. version .. "\n")

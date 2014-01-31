@@ -1,3 +1,7 @@
+version = "1.0"
+
+fgColor, bgColor = colors.lime, colors.red
+
 -- class Window
 Window = {}
 Window.__index = Window
@@ -9,8 +13,18 @@ function new(out, title)
 	tmp.mon = out
 	tmp.width, tmp.height = 49, 15
 	tmp.x, tmp.y = 1, 1
-	textColor, bgColor = colors.lime, colors.red
+	tmp.fgColor, tmp.bgColor = fgColor, bgColor
+	tmp.comp = {}
 	return tmp
+end
+
+function Window:add(component)
+	local i = 1
+	while (self.comp[i]) do
+		i = i + 1
+	end
+	self.comp[i] = component
+	component:setParent(self)
 end
 
 function Window:nl(x)
@@ -32,8 +46,8 @@ function Window:draw()
 		self:nl(self.x)
 	end
 
-	self.mon.setTextColor(textColor)
-	self.mon.setBackgroundColor(bgColor)
+	self.mon.setTextColor(self.fgColor)
+	self.mon.setBackgroundColor(self.bgColor)
 	self.mon.setCursorPos(self.x, self.y)
 	self:vline()
 
@@ -58,47 +72,34 @@ function Window:draw()
 		self:nl(self.x)
 	end
 	self:vline()
-	self.onDraw and self:onDraw()
+	_ = self.onDraw and self:onDraw(self.mon)
+	for _, comp in ipairs(self.comp) do
+		comp:draw(self.mon)
+	end
 end
 
 function Window:loop()
-	self.onStart and self:onStart()
+	_ = self.onStart and self:onStart()
 	while not self.exit do
 		self:draw()
 		e, p1, p2, p3, p4, p5 = os.pullEvent()
 		if (e == "monitor_touch") then
 			if (self.onTouch and self:onTouch(p1, p2, p3)) then
-				-- find components on touched position
+				for _, comp in ipairs(self.comp) do
+					_ = comp.onTouch and comp:onTouch(p1, p2, p3)
+				end
 			end
 		elseif (e == "mouse_click") then
 			if (self.onClick and self:onClick(p1, p2, p3)) then
-				-- find components on touched position
+				for _, comp in ipairs(self.comp) do
+					_ = comp.onClick and comp:onClick(p1, p2, p3)
+				end
 			end
 		end
 	end
-	self.onEnd and self:onEnd()
+	_ = self.onEnd and self:onEnd()
 	self.exit = nil
 end
--- end class Window
+-- end class
 
-version = "1.0"
-
-write("loaded API: window - " .. version .. "\n")
-
---[
-do -- main
-	w = new(peripheral.wrap("top"), "test")
-
-	function w:onClick()
-		self.exit = true
-	end
-
-	function w:onTouch()
-		self.exit = true
-	end
-
-	w.mon.setTextScale(0.5);
-	w:loop()
-	w.mon:clear()
-end
---]]
+write("loaded API: Window - " .. version .. "\n")
