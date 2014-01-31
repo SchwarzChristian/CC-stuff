@@ -1,7 +1,6 @@
 version = "1.0"
 
--- class Component
-
+-- class Label
 Label = {}
 Label.__index = Label
 
