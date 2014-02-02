@@ -7,13 +7,13 @@ Window = {}
 Window.__index = Window
 
 function new(out, title)
-	local tmp = {}
+	local tmp = Component.new()
 	setmetatable(tmp, Window)
-	tmp.title = title or ""
-	tmp.mon = out
-	tmp.width, tmp.height = 49, 15
-	tmp.x, tmp.y = 1, 1
+	tmp.title = Label.new(title)
+	tmp.width, tmp.height = 51, 19
 	tmp.fgColor, tmp.bgColor = fgColor, bgColor
+	tmp.out = out
+	tmp.drawingPane = DrawingPane.new(out, tmp.x + 1, tmp.y  +3, tmp.width - 2, tmp.height - 4, true)
 	tmp.comp = {}
 	return tmp
 end
@@ -29,61 +29,58 @@ end
 
 function Window:nl(x)
 	local y
-	_, y = self.mon.getCursorPos();
-	self.mon.setCursorPos(x or 1, y + 1);
+	_, y = self.out.getCursorPos();
+	self.out.setCursorPos(x or 1, y + 1);
 end
 
 function Window:clear()
-	self.mon.clear();
-	self.mon.setCursorPos(1, 1);
+	self.out.clear();
+	self.out.setCursorPos(1, 1);
 end
 
-function Window:draw()
+function Window:draw(out)
 	function Window:vline()
-		self.mon.write("+");
-		for i = 1, self.width do self.mon.write("-") end
-		self.mon.write("+")
+		out.write("+");
+		for i = 1, self.width - 2 do out.write("-") end
+		out.write("+")
 		self:nl(self.x)
 	end
 
-	self.mon.setTextColor(self.fgColor)
-	self.mon.setBackgroundColor(self.bgColor)
-	self.mon.setCursorPos(self.x, self.y)
+	out.setTextColor(self.fgColor)
+	out.setBackgroundColor(self.bgColor)
+	out.setCursorPos(self.x, self.y)
 	self:vline()
 
-	self.mon.write("| ")
-	for i = 1, self.width - 2 do 
-		if (i <= #self.title) then
-			self.mon.write(self.title:sub(i, i))
-		else
-			self.mon.write(" ")
-		end
+	out.write("| ")
+	for _ = 1, self.width - 4 do
+		out.write(" ")
 	end
-	self.mon.write(" |")
+	out.write(" |")
 	self:nl(self.x)
 	
 	self:vline()
-	for _ = 1, self.height do
-		self.mon.write("|")
-		for _ = 1, self.width do
-			self.mon.write(" ")
+	for _ = 1, self.height - 4 do
+		out.write("|")
+		for _ = 1, self.width - 2 do
+			out.write(" ")
 		end
-		self.mon.write("|")
+		out.write("|")
 		self:nl(self.x)
 	end
 	self:vline()
-	_ = self.onDraw and self:onDraw(self.mon)
+	self.title:draw(DrawingPane.new(out, 3, 2, self.width - 4, 1, true))
+	_ = self.onDraw and self:onDraw(self.drawingPane)
 	for _, comp in ipairs(self.comp) do
-		comp:draw(self.mon)
+		comp:draw(self.drawingPane)
 	end
 end
 
 function Window:loop()
 	_ = self.onStart and self:onStart()
 	while not self.exit do
-		self:draw()
+		self:draw(self.out)
 		e, p1, p2, p3, p4, p5 = os.pullEvent()
-		if (e == "monitor_touch") then
+		if (e == "drawingPaneitor_touch") then
 			if (self.onTouch and self:onTouch(p1, p2, p3)) then
 				for _, comp in ipairs(self.comp) do
 					_ = comp.onTouch and comp:onTouch(p1, p2, p3)

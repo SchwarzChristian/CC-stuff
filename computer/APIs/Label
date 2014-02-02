@@ -4,34 +4,19 @@ version = "1.0"
 Label = {}
 Label.__index = Label
 
-function new(text)
-	local tmp = Component.new()
+function new(text, x, y)
+	local tmp = Component.new(x, y)
 	setmetatable(tmp, Label)
-	tmp:setText(text)
+	tmp.text = text
 	return tmp
 end
 
-function Label:setText(text)
-	self.text = text
-	if (self.parent) then
-		self.width = min(#text, self.parent.width - self.x + 1)
-	end
-end
-
-function Label.setParent(parent)
-	self.parent = parent
-	self:setText(self.Text)
-end
-
-function Label:onDraw(mon)
-	if (self.parent) then
-		mon.setCursorPos(self.parent.x + self.x, self.parent.y + self.y)
-		mon.setTextColor(self.parent.fgColor)
-		mon.setBackgroundColor(self.parent.bgColor)
-		for i = 1, self.width do
-			mon.write(text:sub(i,i))
-		end
-	end
+function Label:draw(out)
+	out:setCursorPos(self.x, self.y)
+	out:setTextColor(self.fgColor)
+	out:setBackgroundColor(self.bgColor)
+	out:write(self.text)
+	_ = self.onDraw and self:onDraw(out)
 end
 -- end class
 

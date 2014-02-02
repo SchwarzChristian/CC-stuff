@@ -5,16 +5,21 @@ version = "1.0"
 Component = {}
 Component.__index = Component
 
-function new()
+function new(x, y, width, height)
 	local tmp = {}
 	setmetatable(tmp, Component)
-	tmp.x, tmp.y = 0, 0
-	tmp.width, tmp.height = 5, 1
+	tmp.x, tmp.y = x or 1, y or 1
+	tmp.width, tmp.height = width or 0, height or 0
+	tmp.fgColor, tmp.bgColor = colors.lime, colors.red
 	return tmp
 end
 
 function Component:setParent(parent)
 	self.parent = parent
+end
+
+function Component:draw(out)
+	_ = self.onDraw and self:onDraw(out)
 end
 -- end class
 
