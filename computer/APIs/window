@@ -13,89 +13,91 @@ function new(out, title)
 	tmp.width, tmp.height = 51, 19
 	tmp.fgColor, tmp.bgColor = fgColor, bgColor
 	tmp.out = out
-	tmp.drawingPane = DrawingPane.new(out, tmp.x + 1, tmp.y  +3, tmp.width - 2, tmp.height - 4, true)
+	tmp.drawingPane = DrawingPane.new(out, tmp.x + 1, tmp.y  + 3, tmp.width - 2, tmp.height - 4, true)
 	tmp.comp = {}
-	return tmp
-end
 
-function Window:add(component)
-	local i = 1
-	while (self.comp[i]) do
-		i = i + 1
-	end
-	self.comp[i] = component
-	component:setParent(self)
-end
-
-function Window:nl(x)
-	local y
-	_, y = self.out.getCursorPos();
-	self.out.setCursorPos(x or 1, y + 1);
-end
-
-function Window:clear()
-	self.out.clear();
-	self.out.setCursorPos(1, 1);
-end
-
-function Window:draw(out)
-	function Window:vline()
-		out.write("+");
-		for i = 1, self.width - 2 do out.write("-") end
-		out.write("+")
-		self:nl(self.x)
+	function tmp:add(component)
+		local i = 1
+		while (self.comp[i]) do
+			i = i + 1
+		end
+		self.comp[i] = component
+		component:setParent(self)
 	end
 
-	out.setTextColor(self.fgColor)
-	out.setBackgroundColor(self.bgColor)
-	out.setCursorPos(self.x, self.y)
-	self:vline()
-
-	out.write("| ")
-	for _ = 1, self.width - 4 do
-		out.write(" ")
+	function tmp:nl(x)
+		local y
+		_, y = self.out.getCursorPos();
+		self.out.setCursorPos(x or 1, y + 1);
 	end
-	out.write(" |")
-	self:nl(self.x)
-	
-	self:vline()
-	for _ = 1, self.height - 4 do
-		out.write("|")
-		for _ = 1, self.width - 2 do
+
+	function tmp:clear()
+		self.out.clear();
+		self.out.setCursorPos(1, 1);
+	end
+
+	function tmp:draw(out)
+		function Window:vline()
+			out.write("+");
+			for i = 1, self.width - 2 do out.write("-") end
+			out.write("+")
+			self:nl(self.x)
+		end
+
+		out.setTextColor(self.fgColor)
+		out.setBackgroundColor(self.bgColor)
+		out.setCursorPos(self.x, self.y)
+		self:vline()
+
+		out.write("| ")
+		for _ = 1, self.width - 4 do
 			out.write(" ")
 		end
-		out.write("|")
+		out.write(" |")
 		self:nl(self.x)
-	end
-	self:vline()
-	self.title:draw(DrawingPane.new(out, 3, 2, self.width - 4, 1, true))
-	_ = self.onDraw and self:onDraw(self.drawingPane)
-	for _, comp in ipairs(self.comp) do
-		comp:draw(self.drawingPane)
-	end
-end
-
-function Window:loop()
-	_ = self.onStart and self:onStart()
-	while not self.exit do
-		self:draw(self.out)
-		e, p1, p2, p3, p4, p5 = os.pullEvent()
-		if (e == "drawingPaneitor_touch") then
-			if (self.onTouch and self:onTouch(p1, p2, p3)) then
-				for _, comp in ipairs(self.comp) do
-					_ = comp.onTouch and comp:onTouch(p1, p2, p3)
-				end
+		
+		self:vline()
+		for _ = 1, self.height - 4 do
+			out.write("|")
+			for _ = 1, self.width - 2 do
+				out.write(" ")
 			end
-		elseif (e == "mouse_click") then
-			if (self.onClick and self:onClick(p1, p2, p3)) then
-				for _, comp in ipairs(self.comp) do
-					_ = comp.onClick and comp:onClick(p1, p2, p3)
+			out.write("|")
+			self:nl(self.x)
+		end
+		self:vline()
+		self.title:draw(DrawingPane.new(out, 3, 2, self.width - 4, 1, true))
+		_ = self.onDraw and self:onDraw(self.drawingPane)
+		for _, comp in ipairs(self.comp) do
+			comp:draw(self.drawingPane)
+		end
+	end
+
+	function tmp:loop()
+		_ = self.onStart and self:onStart()
+		while not self.exit do
+			self:draw(self.out)
+			e, p1, p2, p3, p4, p5 = os.pullEvent()
+			if (e == "monitor_touch") then
+				if (not (self.onTouch and self:onTouch(p1, p2, p3))) then
+					for _, comp in ipairs(self.comp) do
+						_ = comp.onTouch and comp:touch(p1, p2 - self.drawingPane.x, p3 - self.drawingPane.y)
+					end
+				end
+			elseif (e == "mouse_click") then
+				if (not (self.onClick and self:onClick(p1, p2, p3))) then
+					for _, comp in ipairs(self.comp) do
+						_ = comp.onClick and comp:click(p1, p2, p3)
+					end
 				end
 			end
 		end
+		_ = self.onEnd and self:onEnd()
+		self.exit = nil
+		self:clear()
 	end
-	_ = self.onEnd and self:onEnd()
-	self.exit = nil
+
+	return tmp
 end
 -- end class
 

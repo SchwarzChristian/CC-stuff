@@ -5,19 +5,22 @@ Label = {}
 Label.__index = Label
 
 function new(text, x, y)
-	local tmp = Component.new(x, y)
+	local tmp = Component.new(x, y, 1, 1)
 	setmetatable(tmp, Label)
 	tmp.text = text
+
+	function tmp:draw(out)
+		self.width = #text
+		out:setCursorPos(self.x, self.y)
+		out:setTextColor(self.fgColor)
+		out:setBackgroundColor(self.bgColor)
+		out:write(self.text)
+		_ = self.onDraw and self:onDraw(out)
+	end
+
 	return tmp
 end
 
-function Label:draw(out)
-	out:setCursorPos(self.x, self.y)
-	out:setTextColor(self.fgColor)
-	out:setBackgroundColor(self.bgColor)
-	out:write(self.text)
-	_ = self.onDraw and self:onDraw(out)
-end
 -- end class
 
 write("loaded API: Label - " .. version .. "\n")

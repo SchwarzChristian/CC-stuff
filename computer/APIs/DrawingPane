@@ -9,59 +9,60 @@ function new(parentPane, x, y, width, height, top)
 	setmetatable(tmp, DrawingPane)
 	tmp.parentPane = parentPane
 	tmp.top = top
+
+	function tmp:getCursorPos()
+		if (self.top) then
+			x, y = self.parentPane.getCursorPos()
+		else
+			x, y = self.parentPane:getCursorPos()
+		end
+		return x - self.x, y - self.y
+	end
+	
+	function tmp:setCursorPos(x, y)
+		x, y = self.x + math.min(math.max(x, 1), self.width), self.y + math.min(math.max(y, 1), self.height)
+		if (self.top) then
+			self.parentPane.setCursorPos(x, y)
+		else
+			self.parentPane:setCursorPos(x, y)
+		end
+	end
+
+	function tmp:write(text)
+		if (not self.top) then return parentPane:write(text) end
+		self:setCursorPos(self:getCursorPos()) -- ensure the cursor is in the pane
+		local x, y = self:getCursorPos()
+		if (y > self.height) then return end
+		for i = 1, math.min(#(text or ""), self.width - x) do
+			self.parentPane.write(text:sub(i,i))
+		end
+	end
+
+	function tmp:setTextColor(color)
+		if (self.top) then
+			self.parentPane.setTextColor(color)
+		else
+			self.parentPane:setTextColor(color)
+		end
+	end
+
+	function tmp:setBackgroundColor(color)
+		if (self.top) then
+			self.parentPane.setBackgroundColor(color)
+		else
+			self.parentPane:setBackgroundColor(color)
+		end
+	end
+
+	function tmp:setTextScale(x)
+		if (self.top) then
+			self.parentPane.setTextScale(x)
+		else
+			self.parentPane:setTextScale(x)
+		end
+	end
+	
 	return tmp
-end
-
-function DrawingPane:getCursorPos()
-	if (self.top) then
-		x, y = self.parentPane.getCursorPos()
-	else
-		x, y = self.parentPane:getCursorPos()
-	end
-	return x - self.x, y - self.y
-end
-
-function DrawingPane:setCursorPos(x, y)
-	x, y = self.x + math.min(math.max(x, 1), self.width), self.y + math.min(math.max(y, 1), self.height)
-	if (self.top) then
-		self.parentPane.setCursorPos(x, y)
-	else
-		self.parentPane:setCursorPos(x, y)
-	end
-end
-
-function DrawingPane:write(text)
-	if (not self.top) then return parentPane:write(text) end
-	self:setCursorPos(self:getCursorPos()) -- ensure the cursor is in the pane
-	local x, y = self:getCursorPos()
-	if (y > self.height) then return end
-	for i = 1, math.min(#(text or ""), self.width - x) do
-		self.parentPane.write(text:sub(i,i))
-	end
-end
-
-function DrawingPane:setTextColor(color)
-	if (self.top) then
-		self.parentPane.setTextColor(color)
-	else
-		self.parentPane:setTextColor(color)
-	end
-end
-
-function DrawingPane:setBackgroundColor(color)
-	if (self.top) then
-		self.parentPane.setBackgroundColor(color)
-	else
-		self.parentPane:setBackgroundColor(color)
-	end
-end
-
-function DrawingPane:setTextScale(x)
-	if (self.top) then
-		self.parentPane.setTextScale(x)
-	else
-		self.parentPane:setTextScale(x)
-	end
 end
 -- end class
 

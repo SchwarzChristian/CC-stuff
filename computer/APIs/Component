@@ -11,15 +11,28 @@ function new(x, y, width, height)
 	tmp.x, tmp.y = x or 1, y or 1
 	tmp.width, tmp.height = width or 0, height or 0
 	tmp.fgColor, tmp.bgColor = colors.lime, colors.red
+
+	function tmp:setParent(parent)
+		self.parent = parent
+	end
+
+	function tmp:draw(out)
+		_ = self.onDraw and self:onDraw(out)
+	end
+
+	function tmp:touch(side, x, y)
+		if (x > 0 and y > 0 and x <= self.width and y <= self.height) then
+			self:onTouch(side, x, y)
+		end
+	end
+	
+	function tmp:click(button, x, y)
+		if (x >= self.x and y >= self.y and x <= self.x + self.width and y <= self.y + self.height) then
+			self:onClick(button, x, y)
+		end
+	end
+	
 	return tmp
-end
-
-function Component:setParent(parent)
-	self.parent = parent
-end
-
-function Component:draw(out)
-	_ = self.onDraw and self:onDraw(out)
 end
 -- end class
 
