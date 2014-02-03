@@ -1,101 +1,88 @@
-local target, name
+version = "1.0"
+name = "Turtle Control"
 
-function head(s)
-	if (s == nil) then
-		s = "";
-	else
-		s = " - " .. s
+local MODEM_SITE = "right"
+local TIMEOUT = 0.5
+local target = {}
+local log = Log.new(name .. ".log")
+local debug = Log.new(nil, name)
+
+log:write("version: " .. version)
+
+function trtList()
+	local w = Window.new(term, name .. " - reachable tutrles")
+
+	function getList()
+		local i = 1
+		for _, c in ipairs(w.comp) do
+			c:remove()
+		end
+		rednet.broadcast("helo")
+		write("ping turtles...\n")
+		repeat
+			local id, msg, dist = rednet.receive(TIMEOUT)
+			if (id and msg) then
+				write(id .. " - " .. msg .. "\n")
+				l = Label.new(msg .. " (" .. dist .. ")", 1, i)
+				l.trtID = id
+				function l:onInteract()
+					target.id = self.trtID
+					target.name = self.text
+					trtCtrl()
+					getList()
+				end
+				w:add(l)
+				i = i + 1
+			end
+		until (not (id and msg))
 	end
-	window.clear();
-	window.vline();
-	window.text("Turtle Control" .. s);
-	window.vline();
+
+	getList()
+	w:loop()
 end
 
-function connect()
-	head();
-
-	rednet.broadcast("helo");
-
-	local idlist = {};
-	local msglist = {};
-	local i = 1;
-
-	while true do
-		id, msg, dst = rednet.receive(0.5);
-		if (id == nil) then break end;
-		idlist[i] = id;
-		msglist[i] = msg;
-		window.text(id .. " - " .. msg .. " (" .. dst .. ")");
-		i = i + 1;
-	end
-	window.text("--- quit ---");
-	window.vline();
-
-	while true do
-		local x, y;
-		_, _, x, y = os.pullEvent("monitor_touch");
-		if (y > 3 and y <= 3 + #idlist) then 
-			target = idlist[y-3];
-			name = msglist[y-3];
-			break
-		elseif (y == #idlist + 4) then
-			os.exit();
+function trtCtrl()
+	local w = Window.new(term, name .. " - " .. target.name)
+	local p = Panel.new(w.drawingPane.width - 23, 1, 24, 8)
+	local id, msg
+	local timerID
+	
+	function w:onTime(id)
+		if (id == timerID) then
+			getInv()
 		end
 	end
-
-	head(name);
-
-	window.text("");
-	window.text(" ready");
-	window.text("");
-	window.text("   /\\    /\\");
-	window.text("  /  \\   /\\");
-	window.text("       //##\\\\");
-	window.text("       \\\\##//");
-	window.text("         \\/   \\  /");
-	window.text("         \\/    \\/");
-	window.text("");
-	window.text("");
-	window.text("");
-	window.vline();
-end
-
-function send(s, to)
-		rednet.send(target, s);
-		
+	
+	function getInv()
+		for y = 2, 8, 2 do
+			p:add(Label.new("+-----+-----+-----+-----", 1, y))
+		end
+		rednet.send(target.id, "getInv")
 		repeat
-			local id, msg = rednet.receive(to);
-			if (id == nil) then return false end;
-		until (id == target and msg == "ACK")
-		return true;
-end
-
-rednet.open("right");
-
-connect();
-
-while true do
-	local x, y;
-	_, _, x, y = os.pullEvent("monitor_touch");
-	window.mon.setCursorPos(3, 5);
-	window.mon.write("working...");
-	if (x >= 5 and x <= 8 and (y == 7 or y == 8)) then
-		if (not send("turtle.up()")) then connect() end
-	elseif ((x == 10 or x == 11) and (y == 9 or y == 10)) then
-		if (not send("turtle.turnLeft()")) then connect() end
-	elseif ((x == 14 or x == 15) and (y == 9 or y == 10)) then
-		if (not send("turtle.turnRight()")) then connect() end
-	elseif ((x == 12 or x == 13) and (y == 7 or y == 8)) then
-		if (not send("turtle.forward()")) then connect() end
-	elseif ((x == 12 or x == 13) and (y == 11 or y == 12)) then
-		if (not send("turtle.back()")) then connect() end
-	elseif (x >= 17 and x <= 20 and (y == 11 or y == 12)) then
-		if (not send("turtle.down()")) then connect() end
-	elseif ((x == 12 or x == 13) and (y == 9 or y == 10)) then
-		connect();
+			id, msg = rednet.receive(TIMEOUT)
+		until (id == target.id)
+		log:write(msg, "rednet from " .. id)
+		if (msg) then
+			for y = 1, 7, 2 do
+				for x = 1, 19, 6 do
+					local i = msg:find(",", 1)
+					local s = msg:sub(1, i - 1)
+					if (#s < 2) then s = " " .. s end
+					msg = msg:gsub("%d+,", "", 1)
+					p:add(Label.new("|" .. s .. "/64", x, y))
+				end
+			end
+		end
+		timerID = os.startTimer(1)
 	end
-	window.mon.setCursorPos(3, 5);
-	window.mon.write("ready     ");
+	
+	getInv()
+	
+	w:add(p)
+	w:loop()
 end
 
+-- main
+rednet.open(MODEM_SITE)
+
+trtList()

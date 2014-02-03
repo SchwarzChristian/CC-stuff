@@ -1,4 +1,6 @@
 version = "1.0"
+name = "Component"
+local log = Log.new(name .. ".log")
 
 -- class Component
 Component = {}
@@ -22,12 +24,14 @@ function new(x, y, width, height)
 	function tmp:touch(side, x, y)
 		if (x >= self.x  and y >= self.y and x < self.x + self.width and y < self.y + self.height) then
 			self:onTouch(side, x, y)
+			self:onInteract(x, y)
 		end
 	end
 	
 	function tmp:click(button, x, y)
-		if (x >= self.x and y >= self.y and x <= self.x + self.width and y <= self.y + self.height) then
-			self:onClick(button, x, y)
+		if (x >= self.x  and y >= self.y and x < self.x + self.width and y < self.y + self.height) then
+			self:onClick(side, x, y)
+			self:onInteract(x, y)
 		end
 	end
 	
@@ -37,8 +41,13 @@ function new(x, y, width, height)
 		self.parent = nil
 	end
 	
+	--callbacks
+	function tmp:onTouch() end
+	function tmp:onClick() end
+	function tmp:onInteract() end
+	
 	return tmp
 end
 -- end class
 
-write("Component - " .. version .. "\n")
+log:write("version: " .. version)

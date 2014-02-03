@@ -1,15 +1,19 @@
-write("loading APIs...\n")
+if (not fs.exists("/log")) then
+	fs.makeDir("/log")
+end
+os.loadAPI("/APIs/Log")
+log = Log.new("startup.log", "startup")
+Log.clearAll()
+log:write("loading APIs...")
 os.loadAPI("/APIs/Component");
 os.loadAPI("/APIs/DrawingPane");
 os.loadAPI("/APIs/Label");
+os.loadAPI("/APIs/Panel")
 os.loadAPI("/APIs/Window");
-write("\nset path...\n")
+log:write("set path...")
 shell.setPath("/bin:" .. shell.path());
-write(shell.path())
-write("\n\ndone.\n")
+log:write("done.")
 term.clear()
 term.setCursorPos(1,1)
 
---while true do
-	shell.run("fs")
---end
+shell.run("ctrt")

@@ -1,4 +1,6 @@
 version = "1.0"
+name = "DrawingPane"
+local log = Log.new(name .. ".log")
 
 -- class DrawingPane
 DrawingPane = {}
@@ -29,11 +31,15 @@ function new(parentPane, x, y, width, height, top)
 	end
 
 	function tmp:write(text)
-		if (not self.top) then return parentPane:write(text) end
+--		if (not self.top) then return self.parentPane:write(text) end
 		local x, y = self:getCursorPos()
 		if (y < 1 or y > self.height) then return end
 		for i = 1, math.min(#(text or ""), self.width - x + 1) do
-			self.parentPane.write(text:sub(i,i))
+			if (self.top) then
+				self.parentPane.write(text:sub(i,i))
+			else
+				self.parentPane:write(text:sub(i,i))
+			end
 		end
 	end
 
@@ -65,4 +71,4 @@ function new(parentPane, x, y, width, height, top)
 end
 -- end class
 
-write("DrawingPane - " .. version .. "\n")
+log:write("version: " .. version)

@@ -1,4 +1,6 @@
 version = "1.0"
+name = "Window"
+local log = Log.new(name .. ".log")
 
 fgColor, bgColor = colors.white, colors.black
 
@@ -75,17 +77,17 @@ function new(out, title)
 
 		self.title:draw(DrawingPane.new(out, 3, 2, self.width - 4, 1, true))
 		
-		_ = self.onDraw and self:onDraw(self.drawingPane)
 		for _, comp in ipairs(self.comp) do
 			comp:draw(self.drawingPane)
 		end
+		_ = self.onDraw and self:onDraw(self.drawingPane)
 	end
 
 	function tmp:loop()
 		_ = self.onStart and self:onStart()
 		while not self.exit do
 			self:draw(self.out)
-			e, p1, p2, p3, p4, p5 = os.pullEvent()
+			local e, p1, p2, p3, p4, p5 = os.pullEvent()
 			if (e == "monitor_touch") then
 				if (p2 - self.x == self.width - 2 and p3 - self.y == 1) then self.exit = true
 				elseif (not (self.onTouch and self:onTouch(p1, p2, p3))) then
@@ -94,11 +96,14 @@ function new(out, title)
 					end
 				end
 			elseif (e == "mouse_click") then
-				if (not (self.onClick and self:onClick(p1, p2, p3))) then
+				if (p2 - self.x == self.width - 2 and p3 - self.y == 1) then self.exit = true
+				elseif (not (self.onClick and self:onClick(p1, p2, p3))) then
 					for _, comp in ipairs(self.comp) do
-						_ = comp.onClick and comp:click(p1, p2, p3)
+						_ = comp.onClick and comp:click(p1, p2 - self.drawingPane.x, p3 - self.drawingPane.y)
 					end
 				end
+			elseif (e == "timer") then
+				_ = self.onTime and self:onTime(p1)
 			end
 		end
 		_ = self.onEnd and self:onEnd()
@@ -112,4 +117,4 @@ function new(out, title)
 end
 -- end class
 
-write("Window - " .. version .. "\n")
+log:write("version: " .. version)

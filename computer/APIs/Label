@@ -1,4 +1,6 @@
 version = "1.0"
+name = "Label"
+local log = Log.new(name .. ".log")
 
 -- class Label
 Label = {}
@@ -25,4 +27,4 @@ end
 
 -- end class
 
-write("Label - " .. version .. "\n")
+log:write("version: " .. version)

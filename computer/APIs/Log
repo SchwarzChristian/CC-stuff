@@ -1,0 +1,58 @@
+version = "1.0"
+name = "Log"
+
+-- class Log
+Log = {}
+Log.__index = Log
+
+function new(file, prefix)
+	local tmp = {}
+	setmetatable(tmp, Log)
+	
+	if (file) then
+		tmp.file = "/log/" .. file
+		write(tmp.file .. "\n")
+	else
+		tmp.file = "/log/debug.log"
+	end
+	
+	if (prefix) then
+		tmp.prefix = " - " .. prefix
+	else
+		tmp.prefix = ""
+	end
+	
+	function tmp:clear()
+		write(self.file .. "\n")
+		fs.open(self.file, "w").close()
+	end
+	
+	function tmp:write(s, pre)
+		if (pre) then
+			pre = " - " .. pre
+		end
+		local param = textutils.formatTime(os.time(), true) .. (pre or self.prefix) .. ": "
+		f = fs.open(self.file, "a")
+		_, res = pcall(function() param = param .. s end)
+		if (res) then
+			f.close()		
+			self:write(res)
+		else
+			f.writeLine(param)
+			f.close()		
+		end
+	end
+	
+	if (not fs.exists(tmp.file)) then
+		tmp:clear()
+	end
+
+	return tmp
+end
+-- end class
+
+function clearAll()
+	for _, f in ipairs(fs.list("/log")) do
+		fs.open("/log/" .. f, "w").close()
+	end
+end

@@ -1,7 +1,10 @@
 local path = "/"
-local w = Window.new(peripheral.wrap("top"), "")
+local w = Window.new(term, "")
+local log = Log.new(name .. ".log")
 
-w.drawingPane:setTextScale(0.5)
+log:write("version: " .. version)
+
+--w.drawingPane:setTextScale(0.5)
 
 function writeList(s)
 	if (s == ".." )then
@@ -39,7 +42,7 @@ function writeList(s)
 	end
 	
 	for _, c in ipairs(w.comp) do
-		function c:onTouch()
+		function c:onInteract()
 			writeList(self.text)
 		end
 	end

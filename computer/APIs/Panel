@@ -1,0 +1,37 @@
+version = "1.0"
+name = "Panel"
+local log = Log.new(name .. ".log")
+
+-- class Panel
+Panel = {}
+Panel.__index = Panel
+
+function new(x, y, width, height)
+	local tmp = DrawingPane.new(nil, x, y, width, height)
+	setmetatable(tmp, Panel)
+	tmp.comp = {}
+
+	function tmp:add(component)
+		local i = 1
+		while (self.comp[i]) do
+			i = i + 1
+		end
+		component.id = i
+		component:setParent(self)
+		self.comp[i] = component
+	end
+	
+	function tmp:draw(out)
+		self.parentPane = out
+		for _, c in ipairs(self.comp) do
+--			log:write(c.x .. "," .. c.y)
+			c:draw(self)
+		end
+	end
+	
+	return tmp
+end
+
+-- end class
+
+log:write("version: " .. version)
