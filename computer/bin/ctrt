@@ -43,7 +43,7 @@ end
 
 function trtCtrl()
 	local w = Window.new(term, name .. " - " .. target.name)
-	local p = Panel.new(w.drawingPane.width - 23, 1, 24, 8)
+	local p = Panel.new(w.drawingPane.width - 11, 1, 12, 8)
 	local id, msg
 	local timerID
 	
@@ -64,12 +64,12 @@ function trtCtrl()
 		log:write(msg, "rednet from " .. id)
 		if (msg) then
 			for y = 1, 7, 2 do
-				for x = 1, 19, 6 do
+				for x = 1, 10, 3 do
 					local i = msg:find(",", 1)
 					local s = msg:sub(1, i - 1)
 					if (#s < 2) then s = " " .. s end
 					msg = msg:gsub("%d+,", "", 1)
-					p:add(Label.new("|" .. s .. "/64", x, y))
+					p:add(Label.new("|" .. s, x, y))
 				end
 			end
 		end
