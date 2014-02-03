@@ -1,38 +1,49 @@
-local path = "/";
-local files;
+local path = "/"
+local w = Window.new(peripheral.wrap("top"), "")
 
-window.init();
+w.drawingPane:setTextScale(0.5)
 
-function draw(p)
-	window.clear();
-	window.vline();
-	window.text(p);
-	window.vline();
-	window.text("./");
-	window.text("../");
-	files = fs.list(path);
-	table.sort(files);
-	for _, s in ipairs(files) do
-		if fs.isDir(path .. s) then
-			s = s .. "/";
+function writeList(s)
+	if (s == ".." )then
+		if (#path > 1) then
+			path = string.sub(path, 1, -string.find(string.reverse(path), "/", 2))
 		end
-		window.text(s);
-	end
-	window.vline();
-end
-
-while true do
-	draw(path);
-	local x, y;
-	_, _, x, y = os.pullEvent("monitor_touch")
-	y = y - 5;
-	if (y == 0 and #path > 1) then
-		path = string.sub(path, 1, -string.find(string.reverse(path), "/", 2));
-	elseif (y > 0 and y <= #files) then
-		if (fs.isDir(path .. files[y])) then
-			path = path .. files[y] .. "/";
+	elseif (s ~= ".") then
+		if (fs.isDir(path .. s)) then
+			path = path .. s
 		else
-			shell.run(path .. files[y]);
+			w.title.text = "run: " .. path .. s
+			w:draw(w.out)
+			shell.run(path .. s)
+		end
+	end
+
+	w.title.text = path
+	
+	local files = fs.list(path)
+	local i = 3
+
+	table.sort(files)
+
+	for _, c in ipairs(w.comp) do
+		c:remove()
+	end
+
+	w:add(Label.new(".", 1, 1))
+	w:add(Label.new("..", 1, 2))
+
+	for _, f in ipairs(files) do
+		if (fs.isDir(path .. f)) then f = f .. "/" end
+		w:add(Label.new(f, 1, i))
+		i = i + 1
+	end
+	
+	for _, c in ipairs(w.comp) do
+		function c:onTouch()
+			writeList(self.text)
 		end
 	end
 end
+
+writeList("")
+w:loop()

@@ -1,9 +1,15 @@
 write("loading APIs...\n")
-os.loadAPI("/APIs/Window");
 os.loadAPI("/APIs/Component");
+os.loadAPI("/APIs/DrawingPane");
 os.loadAPI("/APIs/Label");
-write("set path...\n")
+os.loadAPI("/APIs/Window");
+write("\nset path...\n")
 shell.setPath("/bin:" .. shell.path());
 write(shell.path())
-write("\ndone.\n")
-shell.run("fs");
+write("\n\ndone.\n")
+term.clear()
+term.setCursorPos(1,1)
+
+--while true do
+	shell.run("fs")
+--end

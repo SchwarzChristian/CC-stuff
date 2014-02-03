@@ -1,6 +1,6 @@
 version = "1.0"
 
-fgColor, bgColor = colors.lime, colors.red
+fgColor, bgColor = colors.white, colors.black
 
 -- class Window
 Window = {}
@@ -21,10 +21,11 @@ function new(out, title)
 		while (self.comp[i]) do
 			i = i + 1
 		end
-		self.comp[i] = component
+		component.id = i
 		component:setParent(self)
+		self.comp[i] = component
 	end
-
+	
 	function tmp:nl(x)
 		local y
 		_, y = self.out.getCursorPos();
@@ -37,26 +38,27 @@ function new(out, title)
 	end
 
 	function tmp:draw(out)
-		function Window:vline()
-			out.write("+");
-			for i = 1, self.width - 2 do out.write("-") end
-			out.write("+")
-			self:nl(self.x)
-		end
-
 		out.setTextColor(self.fgColor)
 		out.setBackgroundColor(self.bgColor)
 		out.setCursorPos(self.x, self.y)
-		self:vline()
+
+		out.write("+");
+		for i = 1, self.width - 4 do out.write("-") end
+		out.write("+-+")
+		self:nl(self.x)
 
 		out.write("| ")
-		for _ = 1, self.width - 4 do
+		for _ = 1, self.width - 5 do
 			out.write(" ")
 		end
-		out.write(" |")
+		out.write("|X|")
 		self:nl(self.x)
 		
-		self:vline()
+		out.write("+");
+		for i = 1, self.width - 4 do out.write("-") end
+		out.write("+-+")
+		self:nl(self.x)
+
 		for _ = 1, self.height - 4 do
 			out.write("|")
 			for _ = 1, self.width - 2 do
@@ -65,8 +67,14 @@ function new(out, title)
 			out.write("|")
 			self:nl(self.x)
 		end
-		self:vline()
+
+		out.write("+");
+		for i = 1, self.width - 2 do out.write("-") end
+		out.write("+")
+		self:nl(self.x)
+
 		self.title:draw(DrawingPane.new(out, 3, 2, self.width - 4, 1, true))
+		
 		_ = self.onDraw and self:onDraw(self.drawingPane)
 		for _, comp in ipairs(self.comp) do
 			comp:draw(self.drawingPane)
@@ -79,7 +87,8 @@ function new(out, title)
 			self:draw(self.out)
 			e, p1, p2, p3, p4, p5 = os.pullEvent()
 			if (e == "monitor_touch") then
-				if (not (self.onTouch and self:onTouch(p1, p2, p3))) then
+				if (p2 - self.x == self.width - 2 and p3 - self.y == 1) then self.exit = true
+				elseif (not (self.onTouch and self:onTouch(p1, p2, p3))) then
 					for _, comp in ipairs(self.comp) do
 						_ = comp.onTouch and comp:touch(p1, p2 - self.drawingPane.x, p3 - self.drawingPane.y)
 					end
@@ -94,6 +103,8 @@ function new(out, title)
 		end
 		_ = self.onEnd and self:onEnd()
 		self.exit = nil
+		self.out.setTextColor(fgColor)
+		self.out.setBackgroundColor(bgColor)
 		self:clear()
 	end
 
@@ -101,4 +112,4 @@ function new(out, title)
 end
 -- end class
 
-write("loaded API: Window - " .. version .. "\n")
+write("Window - " .. version .. "\n")
