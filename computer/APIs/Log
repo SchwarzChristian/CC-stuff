@@ -9,9 +9,9 @@ function new(file, prefix)
 	local tmp = {}
 	setmetatable(tmp, Log)
 	
+	
 	if (file) then
 		tmp.file = "/log/" .. file
-		write(tmp.file .. "\n")
 	else
 		tmp.file = "/log/debug.log"
 	end
@@ -23,7 +23,6 @@ function new(file, prefix)
 	end
 	
 	function tmp:clear()
-		write(self.file .. "\n")
 		fs.open(self.file, "w").close()
 	end
 	
@@ -31,6 +30,7 @@ function new(file, prefix)
 		if (pre) then
 			pre = " - " .. pre
 		end
+		
 		local param = textutils.formatTime(os.time(), true) .. (pre or self.prefix) .. ": "
 		f = fs.open(self.file, "a")
 		_, res = pcall(function() param = param .. s end)

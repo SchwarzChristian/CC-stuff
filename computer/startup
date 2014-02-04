@@ -1,6 +1,7 @@
 if (not fs.exists("/log")) then
 	fs.makeDir("/log")
 end
+
 os.loadAPI("/APIs/Log")
 log = Log.new("startup.log", "startup")
 Log.clearAll()
@@ -13,7 +14,6 @@ os.loadAPI("/APIs/Window");
 log:write("set path...")
 shell.setPath("/bin:" .. shell.path());
 log:write("done.")
-term.clear()
-term.setCursorPos(1,1)
 
+-- working on:
 shell.run("ctrt")
