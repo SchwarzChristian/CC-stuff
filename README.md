@@ -13,8 +13,8 @@ if you just want to try it, do the following:
 * built a turtle and a computer
 * create a file or directory on the turtle and the computer
 * run the 'id' command on both machines and remember the ids
-* navigate to <minecraft>/saves/<yourSavegameName>/computer
-* copy all files and dirs from <repo>/computer to the directory named with the id of your computer
-* copy all files and dirs from <repo>/turtle to the directory named with the id of your turtle
+* navigate to \<minecraft\>/saves/\<yourSavegameName\>/computer
+* copy all files and dirs from \<repo\>/computer to the directory named with the id of your computer
+* copy all files and dirs from \<repo\>/turtle to the directory named with the id of your turtle
 * reboot both machines ingame
 * enjoy your buggy and unfinished but new software ;)
