@@ -1,0 +1,48 @@
+version = "1.0"
+name = "Socket"
+
+local log = Log.new(name .. ".log")
+local ignore = {ready = true, busy = true}
+
+-- class Socket
+Socket = {}
+Socket.__index = Socket
+
+function new(target)
+	local tmp = {}
+	setmetatable(tmp, Socket)
+	tmp.target = target
+	
+	function tmp:connect(target)
+		self.target = target
+	end
+	
+	function tmp:disconnect()
+		tmp:connect(nil)
+	end
+	
+	function tmp:send(msg)
+		if (self.target) then
+			rednet.send(self.target, msg)
+			log:write(self.target .. ": " .. msg or "<nil>", "send")
+		else
+			log:write("tried to send '" .. msg or "<nil>" .. 
+					"' without beeing connected (you mean Socket:broadcast(msg)?)", "send")
+		end
+	end
+	
+	function tmp:broadcast(msg)
+		rednet.broadcast(msg)
+		log:write(msg, "broadcast")
+	end
+
+	function tmp:recv(timeout)
+		
+	return tmp	
+end
+
+-- end class
+
+
+log:write("version: " .. version)
+

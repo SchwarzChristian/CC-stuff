@@ -11,6 +11,7 @@ log:write("version: " .. version)
 
 function trtList()
 	local w = Window.new(term, name .. " - reachable tutrles")
+	w:clear()
 
 	function getList()
 		local i = 1
