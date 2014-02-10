@@ -1,3 +1,5 @@
+os.loadAPI("/APIs/trt")
+
 rednet.open("right");
 
 local ignore = {ready = true, busy = true}
@@ -23,9 +25,11 @@ while true do
 			s:reverse():gsub(",", "", 1):reverse()
 			rednet.send(id, s)
 		elseif (msg:find("do ") == 1) then
-			rednet.send("ACK")
+			rednet.send(id, "ACK")
 			local success, res = pcall(loadstring(msg:sub(4)))
-			rednet.send(id, (success and "true," or "false,") .. res)
+			res = (success and "true" or "false") .. (res and "," .. res or "")
+			write(res .. "\n")
+			rednet.send(id, res)
 		else
 			rednet.send(id, "unknown command: " .. msg);
 		end

@@ -31,13 +31,14 @@ function new(target)
 		end
 	end
 	
-	function tmp:recv(timeout, noignore)
+	function tmp:recv(noignore)
 		local id, msg, dist
 		local start = os.clock()
-		if (timeout) then timeout = timeout / 10 end
+		local timeout
+		if (self.timeout) then timeout = self.timeout / 10 end
 		repeat
 			id, msg, dist = rednet.receive(timeout)
-			if (timeout and os.clock() - start >= timeout * 10) then 
+			if (self.timeout and os.clock() - start >= self.timeout) then 
 				log:write("timeout", "recv")
 				return { time = os.clock() - start } 
 			end
@@ -46,18 +47,18 @@ function new(target)
 		return {msg = msg, dist = dist, time = os.clock() - start, id = id}
 	end
 	
-	function tmp:sendAcked(msg, timeout, trys)
+	function tmp:sendAcked(msg, trys)
 		trys = type(trys) == "Number" and trys or 1
 		repeat
 			self:send(msg)
-			if (self:recv(timeout).msg == "ACK") then return true end
+			if (self:recv().msg == "ACK") then return true end
 			trys = trys - 1
 		until (trys < 1)
 		return false
 	end
 	
-	function tmp:recvAcked(timeout, noignore)
-		self:send("ACK", self:recv(timeout, noignore).id)
+	function tmp:recvAcked(noignore)
+		self:send("ACK", self:recv(noignore).id)
 	end
 	
 	return tmp	

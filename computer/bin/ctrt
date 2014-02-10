@@ -2,7 +2,6 @@ version = "1.0"
 name = "Turtle Control"
 
 local MODEM_SITE = "right"
-local TIMEOUT = 0.5
 local log = Log.new(name .. ".log")
 local debug = Log.new(nil, name)
 local sock = Socket.new()
@@ -20,23 +19,25 @@ function trtList()
 			c:remove()
 		end
 		write("ping turtles...\n")
-		sock:send("helo")
 		repeat
-			local tmp = sock:recv(TIMEOUT)
-			if (tmp.id) then
-				write(tmp.id .. " - " .. tmp.msg .. "\n")
-				l = Label.new(tmp.msg .. " (" .. tmp.dist .. ")", 1, i)
-				l.trtID = tmp.id
-				function l:onInteract()
-					sock:connect(self.trtID)
-					sock.name = self.text
-					trtCtrl()
-					getList()
+			sock:send("helo")
+			repeat
+				local tmp = sock:recv()
+				if (tmp.id) then
+					write(tmp.id .. " - " .. tmp.msg .. "\n")
+					l = Label.new(tmp.msg .. " (" .. tmp.dist .. ")", 1, i)
+					l.trtID = tmp.id
+					function l:onInteract()
+						sock:connect(self.trtID)
+						sock.name = self.text
+						trtCtrl()
+						getList()
+					end
+					w:add(l)
+					i = i + 1
 				end
-				w:add(l)
-				i = i + 1
-			end
-		until (not tmp.id)
+			until (not tmp.id)
+		until (#w.comp > 0)
 	end
 
 	getList()
@@ -45,25 +46,59 @@ end
 
 function trtCtrl()
 	local w = Window.new(term, name .. " - " .. sock.name)
-	local p = Panel.new(w.drawingPane.width - 11, 1, 12, 8)
-	local timerID
+	local inv = Panel.new(w.drawingPane.width - 11, 1, 12, 8)
 	local l = {}
+	local dig = Checkbox.new("dig", 1, 3)
+	local ctrl = {}
+	
+	dig.checked = true
+	
+	function sendDo(dir)
+		sock:sendAcked("do trt[\"" .. (dig.checked and "dig" or "move") .. "\"](\"" .. dir .. "\")")
+		local dist = sock:recv(TIMEOUT).dist
+		if (not dist) then 
+			w.exit = true
+			return 
+		end
+		w.title.text = sock.name .. " (" .. dist .. ")"
+		getInv()
+	end
+	
+	ctrl[1] = Label.new("+", 1, 1)
+	ctrl[1].onInteract = function() sendDo("up") end
+	w:add(ctrl[1])
+	
+	ctrl[2] = Label.new("/\\", 2, 1)
+	ctrl[2].onInteract = function() sendDo("forw") end
+	w:add(ctrl[2])
+	
+	ctrl[3] = Label.new("-", 4, 1)
+	ctrl[3].onInteract = function() sendDo("down") end
+	w:add(ctrl[3])
+	
+	ctrl[4] = Label.new("<", 1, 2)
+	ctrl[4].onInteract = function() sendDo("left") end
+	w:add(ctrl[4])
+	
+	ctrl[5] = Label.new("\\/", 2, 2)
+	ctrl[5].onInteract = function() sendDo("back") end
+	w:add(ctrl[5])
+	
+	ctrl[6] = Label.new(">", 4, 2)
+	ctrl[6].onInteract = function() sendDo("right") end
+	w:add(ctrl[6])
+	
+	w:add(dig)
 	
 	for y = 2, 8, 2 do
-		p:add(Label.new("+-----+-----+-----+-----", 1, y))
+		inv:add(Label.new("+--+--+--+--", 1, y))
 	end
 
-	function w:onTime(id)
-		if (id == timerID) then
-			getInv()
-		end
-	end
-	
 	local i = 1
 	for y = 1, 7, 2 do
 		for x = 1, 10, 3 do
 			l[i] = Label.new("| 0", x, y)
-			p:add(l[i])
+			inv:add(l[i])
 			i = i + 1
 		end
 	end
@@ -71,30 +106,32 @@ function trtCtrl()
 	function getInv()
 		sock:sendAcked("getInv")
 		local msg = sock:recv(TIMEOUT).msg
-		if (msg) then
-			local i = 1
-			for y = 1, 7, 2 do
-				for x = 1, 10, 3 do
-					local x = msg:find(",", 1)
-					local s = msg:sub(1, x - 1)
-					if (#s < 2) then s = " " .. s end
-					msg = msg:gsub("%d+,", "", 1)
-					l[i].text = "|" .. s
-					i = i + 1
-				end
+		if (not msg) then
+			w.exit = true
+			return
+		end
+		local i = 1
+		for y = 1, 7, 2 do
+			for x = 1, 10, 3 do
+				local x = msg:find(",", 1)
+				local s = msg:sub(1, x - 1)
+				if (#s < 2) then s = " " .. s end
+				msg = msg:gsub("%d+,", "", 1)
+				l[i].text = "|" .. s
+				i = i + 1
 			end
 		end
-		
-		timerID = os.startTimer(1)
 	end
 	
 	getInv()
 	
-	w:add(p)
+	w:add(inv)
 	w:loop()
 end
 
 -- main
 rednet.open(MODEM_SITE)
+
+sock.timeout = 1
 
 trtList()

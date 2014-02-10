@@ -1,0 +1,37 @@
+version = "1.0"
+name = "trt"
+
+local digmap = { 
+	forw = "dig", 
+	up = "digUp", 
+	down = "digDown" 
+}
+local movemap = {
+	forw = "forward", 
+	back = "back",
+	left = "turnLeft",
+	right = "turnRight",
+	up = "up",
+	down = "down"
+}
+local detectmap = {
+	forw = "detect", 
+	up = "detectUp", 
+	down = "detectDown" 	
+}
+
+function move(dir, steps)
+	for i = 1, steps or 1 do turtle[movemap[dir]]() end
+end
+
+function dig(dir, steps, dontmove)
+	for i = 1, steps or 1 do
+		if (digmap[dir]) then
+			while (turtle[detectmap[dir]]()) do 
+				turtle[digmap[dir]]() 
+				if (dir ~= "down") then os.sleep(0.5) end
+			end
+		end
+		if (not dontmove) then move(dir) end
+	end
+end
