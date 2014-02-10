@@ -25,7 +25,7 @@ while true do
 		elseif (msg:find("do ") == 1) then
 			rednet.send("ACK")
 			local success, res = pcall(loadstring(msg:sub(4)))
-			rednet.send(id, (success and "true, " or "false, ") .. res)
+			rednet.send(id, (success and "true," or "false,") .. res)
 		else
 			rednet.send(id, "unknown command: " .. msg);
 		end

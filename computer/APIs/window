@@ -29,8 +29,7 @@ function new(out, title)
 	end
 	
 	function tmp:nl(x)
-		local y
-		_, y = self.out.getCursorPos();
+		local _, y = self.out.getCursorPos();
 		self.out.setCursorPos(x or 1, y + 1);
 	end
 

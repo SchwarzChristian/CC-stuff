@@ -1,0 +1,32 @@
+version = "1.0"
+name = "Checkbox"
+local log = Log.new(name .. ".log")
+
+-- class Label
+Checkbox = {}
+Checkbox.__index = Checkbox
+
+function new(text, x, y, checked)
+	local tmp = Label.new(text, x, y)
+	setmetatable(tmp, Checkbox)
+	tmp.checked = checked or false
+
+	function tmp:draw(out)
+		self.width = #self.text + 2
+		out:setCursorPos(self.x, self.y)
+		out:setTextColor(self.fgColor)
+		out:setBackgroundColor(self.bgColor)
+		out:write((self.checked and "+ " or "- ") .. self.text)
+		_ = self.onDraw and self:onDraw(out)
+	end
+	
+	function tmp:onInteract()
+		self.checked = not self.checked
+	end
+
+	return tmp
+end
+
+-- end class
+
+log:write("version: " .. version)
