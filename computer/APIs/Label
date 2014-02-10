@@ -14,7 +14,7 @@ function new(text, x, y)
 	tmp.text = text
 
 	function tmp:draw(out)
-		self.width = #text
+		self.width = #self.text
 		out:setCursorPos(self.x, self.y)
 		out:setTextColor(self.fgColor)
 		out:setBackgroundColor(self.bgColor)

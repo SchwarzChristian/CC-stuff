@@ -9,24 +9,25 @@ while true do
 		id, msg = rednet.receive()
 	until (not ignore[msg]) -- leave loop if msg should not be ignored
 	rednet.broadcast("busy")
-	write(id .. ": " ..msg .. "\n")
-	if (msg:find("helo") == 1) then
-		rednet.send(id, "ACK")
-		rednet.send(id, "Mining Turtle");
-	elseif (msg:find("getInv") == 1) then
-		rednet.send(id, "ACK")
-		local s = ""
-		for i = 1, 16 do
-			s = s .. turtle.getItemCount(i) .. ","
+	write(id .. ": " .. (msg or "<nil/false>") .. "\n")
+	if (type(msg) == "string") then
+		if (msg:find("helo") == 1) then
+			rednet.send(id, "Mining Turtle");
+		elseif (msg:find("getInv") == 1) then
+			rednet.send(id, "ACK")
+			local s = ""
+			for i = 1, 16 do
+				s = s .. turtle.getItemCount(i) .. ","
+			end
+			-- remove last ','
+			s:reverse():gsub(",", "", 1):reverse()
+			rednet.send(id, s)
+		elseif (msg:find("do ") == 1) then
+			rednet.send("ACK")
+			local success, res = pcall(loadstring(msg:sub(4)))
+			rednet.send(id, (success and "true, " or "false, ") .. res)
+		else
+			rednet.send(id, "unknown command: " .. msg);
 		end
-		-- remove last ','
-		s:reverse():gsub(",", "", 1):reverse()
-		rednet.send(id, s)
-	elseif (msg:find("do ") == 1) then
-		rednet.send("ACK")
-		local success, res = pcall(loadstring(msg:sub(4)))
-		rednet.send(id, (success and "true, " or "false, ") .. res)
-	else
-		rednet.send(id, "unknown command: " .. msg);
 	end
 end

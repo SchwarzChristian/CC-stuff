@@ -51,6 +51,10 @@ function new(file, prefix)
 end
 -- end class
 
+function write(s, prefix)
+	new():write(s, prefix)
+end
+
 function clearAll()
 	for _, f in ipairs(fs.list("/log")) do
 		fs.open("/log/" .. f, "w").close()

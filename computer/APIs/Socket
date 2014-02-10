@@ -21,23 +21,45 @@ function new(target)
 		tmp:connect(nil)
 	end
 	
-	function tmp:send(msg)
+	function tmp:send(msg, id)
 		if (self.target) then
-			rednet.send(self.target, msg)
-			log:write(self.target .. ": " .. msg or "<nil>", "send")
+			rednet.send(self.target or id, msg)
+			log:write((self.target or id) .. ": " .. (msg or "<nil/false>"), "send")
 		else
-			log:write("tried to send '" .. msg or "<nil>" .. 
-					"' without beeing connected (you mean Socket:broadcast(msg)?)", "send")
+			rednet.broadcast(msg)
+			log:write("all: " .. (msg or "<nil/false>"), "send")
 		end
 	end
 	
-	function tmp:broadcast(msg)
-		rednet.broadcast(msg)
-		log:write(msg, "broadcast")
+	function tmp:recv(timeout, noignore)
+		local id, msg, dist
+		local start = os.clock()
+		if (timeout) then timeout = timeout / 10 end
+		repeat
+			id, msg, dist = rednet.receive(timeout)
+			if (timeout and os.clock() - start >= timeout * 10) then 
+				log:write("timeout", "recv")
+				return { time = os.clock() - start } 
+			end
+		until (msg and (noignore or not ignore[msg]) and (not self.target or id == self.target))
+		log:write(id .. ": " .. msg, "recv")
+		return {msg = msg, dist = dist, time = os.clock() - start, id = id}
 	end
-
-	function tmp:recv(timeout)
-		
+	
+	function tmp:sendAcked(msg, timeout, trys)
+		trys = type(trys) == "Number" and trys or 1
+		repeat
+			self:send(msg)
+			if (self:recv(timeout).msg == "ACK") then return true end
+			trys = trys - 1
+		until (trys < 1)
+		return false
+	end
+	
+	function tmp:recvAcked(timeout, noignore)
+		self:send("ACK", self:recv(timeout, noignore).id)
+	end
+	
 	return tmp	
 end
 

@@ -3,39 +3,40 @@ name = "Turtle Control"
 
 local MODEM_SITE = "right"
 local TIMEOUT = 0.5
-local target = {}
 local log = Log.new(name .. ".log")
 local debug = Log.new(nil, name)
+local sock = Socket.new()
 
 log:write("version: " .. version)
 
 function trtList()
 	local w = Window.new(term, name .. " - reachable tutrles")
 	w:clear()
-
+	sock:disconnect()
+	
 	function getList()
 		local i = 1
 		for _, c in ipairs(w.comp) do
 			c:remove()
 		end
-		rednet.broadcast("helo")
 		write("ping turtles...\n")
+		sock:send("helo")
 		repeat
-			local id, msg, dist = rednet.receive(TIMEOUT)
-			if (id and msg) then
-				write(id .. " - " .. msg .. "\n")
-				l = Label.new(msg .. " (" .. dist .. ")", 1, i)
-				l.trtID = id
+			local tmp = sock:recv(TIMEOUT)
+			if (tmp.id) then
+				write(tmp.id .. " - " .. tmp.msg .. "\n")
+				l = Label.new(tmp.msg .. " (" .. tmp.dist .. ")", 1, i)
+				l.trtID = tmp.id
 				function l:onInteract()
-					target.id = self.trtID
-					target.name = self.text
+					sock:connect(self.trtID)
+					sock.name = self.text
 					trtCtrl()
 					getList()
 				end
 				w:add(l)
 				i = i + 1
 			end
-		until (not (id and msg))
+		until (not tmp.id)
 	end
 
 	getList()
@@ -43,37 +44,47 @@ function trtList()
 end
 
 function trtCtrl()
-	local w = Window.new(term, name .. " - " .. target.name)
+	local w = Window.new(term, name .. " - " .. sock.name)
 	local p = Panel.new(w.drawingPane.width - 11, 1, 12, 8)
-	local id, msg
 	local timerID
+	local l = {}
 	
+	for y = 2, 8, 2 do
+		p:add(Label.new("+-----+-----+-----+-----", 1, y))
+	end
+
 	function w:onTime(id)
 		if (id == timerID) then
 			getInv()
 		end
 	end
 	
-	function getInv()
-		for y = 2, 8, 2 do
-			p:add(Label.new("+-----+-----+-----+-----", 1, y))
+	local i = 1
+	for y = 1, 7, 2 do
+		for x = 1, 10, 3 do
+			l[i] = Label.new("| 0", x, y)
+			p:add(l[i])
+			i = i + 1
 		end
-		rednet.send(target.id, "getInv")
-		repeat
-			id, msg = rednet.receive(TIMEOUT)
-		until (id == target.id)
-		log:write(msg, "rednet from " .. id)
+	end
+
+	function getInv()
+		sock:sendAcked("getInv")
+		local msg = sock:recv(TIMEOUT).msg
 		if (msg) then
+			local i = 1
 			for y = 1, 7, 2 do
 				for x = 1, 10, 3 do
-					local i = msg:find(",", 1)
-					local s = msg:sub(1, i - 1)
+					local x = msg:find(",", 1)
+					local s = msg:sub(1, x - 1)
 					if (#s < 2) then s = " " .. s end
 					msg = msg:gsub("%d+,", "", 1)
-					p:add(Label.new("|" .. s, x, y))
+					l[i].text = "|" .. s
+					i = i + 1
 				end
 			end
 		end
+		
 		timerID = os.startTimer(1)
 	end
 	
