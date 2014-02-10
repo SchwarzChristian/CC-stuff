@@ -1,0 +1,42 @@
+English
+=======
+
+requirements
+------------
+
+* Computer Craft 1.58 or above (not tested with other versions) 
+  and its requirements (see http://www.computercraft.info)
+
+how to install
+--------------
+
+* built a turtle and a computer
+* create a file or directory on the turtle and the computer
+* run the 'id' command on both machines and remember the ids
+* navigate to <minecraft>/saves/<yourSavegameName>/computer
+* copy all files and dirs from ./computer/ to the directory named with the id of your computer(s)
+* copy all files and dirs from ./turtle/ to the directory named with the id of your turtle(s)
+* reboot your machines ingame
+* enjoy your new software ;)
+
+Deutsch
+=======
+
+Abhängigkeiten
+--------------
+
+* Computer Craft 1.58 oder höher (mit anderen Versionen hab ich's nicht getestet) 
+  und alle abhängigkeiten davon (siehe http://www.computercraft.info)
+
+Installation
+------------
+
+* baue (mindestens) ein Turtle und einen Computer
+* erstelle eine Datei oder ein Verzeichnis auf Turtle und Computer
+* führe das 'id'-Kommando auf beiden aus
+* wechsle auf deinem realen Computer in das Verzeichnis <minecraft>/saves/<deinSavegameName>/computer
+* kopiere alle Dateien und Verzeichnisse von ./computer/ in das Verzeichnis mit dem Namen der ID deines Computers
+* kopiere alle Dateien und Verzeichnisse von ./turtle/ in das Verzeichnis mit dem Namen der ID deines Turtles
+* starte alle Ingame-Rechner und -Turtles neu
+* hab Spaß mit der neuen Software ;)
+
