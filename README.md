@@ -1,5 +1,5 @@
-CC-stuff
-========
+Computer Craft Extention
+========================
 
 some scripts for [Computer Craft](http://www.computercraft.info/).
 
