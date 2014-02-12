@@ -29,7 +29,7 @@ function opposite(dir)
 end
 
 function move(dir, steps)
-	if (not (dir and movemap[dir or "forw"])) then return "illegal direction" end
+	if (dir and not movemap[dir]) then return "illegal direction" end
 	for i = 1, steps or 1 do turtle[movemap[dir or "forw"]]() end
 	return "ok"
 end
@@ -65,28 +65,30 @@ function digPlane(x, y, noreturn)
 		return "coordinate to close! (min: 2x2)"
 	end
 	local tdir = x > 0 and "right" or "left"
+	x = math.abs(x)
 	if (y < 0) then 
 		move("left", 2)
 		tdir = opposite(tdir)
 		y = 0 - y
 	end
-	for i = 1, math.abs(x) do
+	for i = 1, x do
 		if (i > 1) then
 			move(tdir)
-			move()
+			dig()
 			move(tdir)
+			tdir = opposite(tdir)
 		end
-		digLine(y)
-		tdir = opposite(tdir)
+		digLine(y - 1)
 	end
-	if (x % 2 > 0) then 
-		move("left", 2)
-		move(y)
+	if (not noreturn) then
+		if (x % 2 > 0) then 
+			move("left", 2)
+			move(nil, y - 1)
+		end
+		move(tdir)
+		move(nil, x - 1)
+		move(tdir)
 	end
-	tdir = opposite(tdir)
-	move(tdir)
-	move(x)
-	move(tdir)
 	return "ok"
 end
 
@@ -109,3 +111,39 @@ function placeLine(dir, steps, slot)
 	return "ok"
 end
 
+function placePlane(x, y, dir, noreturn)
+	dir = dir or "down"
+	if (dir ~= "up" and dir ~= "down") then return "illegal direction" end
+	local tdir = x > 0 and "right" or "left"
+	x = math.abs(x)
+	if (y < 0) then 
+		move("left", 2)
+		tdir = opposite(tdir)
+		y = 0 - y
+	end
+	for i = 1, x do
+		if (i > 1) then
+			move(tdir)
+			dig()
+			move(tdir)
+			tdir = opposite(tdir)
+		end
+		for i = 1, y do
+			if (i > 1) then
+				dig()
+			end
+			local s = place(dir)
+			if (s ~= "ok") then return s end
+		end
+	end
+	if (not noreturn) then
+		if (x % 2 > 0) then 
+			move("left", 2)
+			move(nil, y - 1)
+		end
+		move(tdir)
+		move(nil, x - 1)
+		move(tdir)
+	end
+	return "ok"
+end

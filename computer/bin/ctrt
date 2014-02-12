@@ -1,16 +1,25 @@
 version = "1.0"
 name = "Turtle Control"
 
+local args = {...}
+
 local MODEM_SITE = "right"
 local log = Log.new(name .. ".log")
 local debug = Log.new(nil, name)
 local sock = Socket.new()
 sock.timeout = 1
 
+if (#args > 0) then
+	out = peripheral.wrap(args[1])
+	out.setTextScale(0.5)
+else
+	out = term
+end
+
 log:write("version: " .. version)
 
 function trtList()
-	local w = Window.new(term, name .. " - reachable tutrles")
+	local w = Window.new(out, name .. " - reachable tutrles")
 	w:clear()
 	sock:disconnect()
 	
@@ -30,7 +39,7 @@ function trtList()
 					l.trtID = tmp.id
 					function l:onInteract()
 						sock:connect(self.trtID)
-						sock.name = self.text
+						sock.name = self.text:sub(1, self.text:find(" ", 1) - 1)
 						trtCtrl()
 						getList()
 					end
@@ -46,7 +55,7 @@ function trtList()
 end
 
 function trtCtrl()
-	local w = Window.new(term, name .. " - " .. sock.name)
+	local w = Window.new(out, name .. " - " .. sock.name)
 	local inv = Panel.new(w.drawingPane.width - 11, 1, 12, 8)
 	local l = {}
 	local dig = Checkbox.new("dig", 1, 3)
@@ -56,12 +65,12 @@ function trtCtrl()
 	
 	function sendDo(dir)
 		sock:sendAcked("do trt[\"" .. (dig.checked and "dig" or "move") .. "\"](\"" .. dir .. "\")")
-		local dist = sock:recv(TIMEOUT).dist
+		local dist = sock:recv().dist
 		if (not dist) then 
 			w.exit = true
 			return 
 		end
-		w.title.text = sock.name .. " (" .. dist .. ")"
+		w.title.text = name .. " - " .. sock.name .. " (" .. dist .. ")"
 		getInv()
 	end
 	
