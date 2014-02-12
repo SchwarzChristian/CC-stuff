@@ -5,6 +5,7 @@ local MODEM_SITE = "right"
 local log = Log.new(name .. ".log")
 local debug = Log.new(nil, name)
 local sock = Socket.new()
+sock.timeout = 1
 
 log:write("version: " .. version)
 
@@ -105,7 +106,7 @@ function trtCtrl()
 
 	function getInv()
 		sock:sendAcked("getInv")
-		local msg = sock:recv(TIMEOUT).msg
+		local msg = sock:recv().msg
 		if (not msg) then
 			w.exit = true
 			return
@@ -131,7 +132,5 @@ end
 
 -- main
 rednet.open(MODEM_SITE)
-
-sock.timeout = 1
 
 trtList()

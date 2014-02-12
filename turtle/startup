@@ -26,7 +26,7 @@ while true do
 			rednet.send(id, s)
 		elseif (msg:find("do ") == 1) then
 			rednet.send(id, "ACK")
-			local success, res = pcall(loadstring(msg:sub(4)))
+			local success, res = pcall(loadstring("return " .. msg:sub(4)))
 			res = (success and "true" or "false") .. (res and "," .. res or "")
 			write(res .. "\n")
 			rednet.send(id, res)

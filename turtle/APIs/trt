@@ -1,37 +1,111 @@
 version = "1.0"
 name = "trt"
 
-local digmap = { 
-	forw = "dig", 
-	up = "digUp", 
-	down = "digDown" 
-}
-local movemap = {
-	forw = "forward", 
-	back = "back",
-	left = "turnLeft",
-	right = "turnRight",
-	up = "up",
-	down = "down"
-}
-local detectmap = {
-	forw = "detect", 
-	up = "detectUp", 
-	down = "detectDown" 	
+local domap = { 
+	forw = "",
+	up   = "Up",
+	down = "Down"
 }
 
+local movemap = {
+	forw  = "forward", 
+	back  = "back",
+	left  = "turnLeft",
+	right = "turnRight",
+	up    = "up",
+	down  = "down"
+}
+
+function opposite(dir)
+	local tmp = {
+		forw  = "back", 
+		back  = "forw",
+		left  = "right",
+		right = "left",
+		up    = "down",
+		down  = "up"
+	}
+	return tmp[dir or "forw"]
+end
+
 function move(dir, steps)
-	for i = 1, steps or 1 do turtle[movemap[dir]]() end
+	if (not (dir and movemap[dir or "forw"])) then return "illegal direction" end
+	for i = 1, steps or 1 do turtle[movemap[dir or "forw"]]() end
+	return "ok"
+end
+
+function detect(dir)
+	dir = dir or "forw"
+	if (not domap[dir]) then return end
+	return turtle["detect" .. domap[dir]]()
 end
 
 function dig(dir, steps, dontmove)
+	dir = dir or "forw"
+	if (not domap[dir]) then 
+		if (dontmove) then return "wrong direction" end
+		return move(dir)
+	end
 	for i = 1, steps or 1 do
-		if (digmap[dir]) then
-			while (turtle[detectmap[dir]]()) do 
-				turtle[digmap[dir]]() 
-				if (dir ~= "down") then os.sleep(0.5) end
-			end
+		while (detect(dir)) do 
+			turtle["dig" .. domap[dir]]()
+			if (dir ~= "down") then os.sleep(0.5) end
 		end
 		if (not dontmove) then move(dir) end
 	end
+	return "ok"
 end
+
+function digLine(steps)
+	return dig(nil, steps or 1)
+end
+
+function digPlane(x, y, noreturn)
+	if (not (x or y) or (x >= -1 and x <= 1) or (y >= -1 and y <= 1)) then
+		return "coordinate to close! (min: 2x2)"
+	end
+	local tdir = x > 0 and "right" or "left"
+	if (y < 0) then 
+		move("left", 2)
+		tdir = opposite(tdir)
+		y = 0 - y
+	end
+	for i = 1, math.abs(x) do
+		if (i > 1) then
+			move(tdir)
+			move()
+			move(tdir)
+		end
+		digLine(y)
+		tdir = opposite(tdir)
+	end
+	if (x % 2 > 0) then 
+		move("left", 2)
+		move(y)
+	end
+	tdir = opposite(tdir)
+	move(tdir)
+	move(x)
+	move(tdir)
+	return "ok"
+end
+
+function place(dir, slot)
+	if (not domap[dir]) then return "wrong direction" end
+	if (slot) then turtle.select(slot) end
+	turtle["place" .. domap[dir]]()
+	return detect(dir) and "ok" or "no more items"
+end
+
+function placeLine(dir, steps, slot)
+	dir = dir or "forw"
+	if (not domap[dir]) then return "wrong direction" end
+	dig(dir, steps or 1)
+	for i = 1, steps or 1 do
+		move(opposite(dir))
+		local s = place(dir, slot)
+		if (s ~= "ok") then return s end
+	end
+	return "ok"
+end
+
