@@ -94,6 +94,22 @@ function digPlane(x, y, noreturn)
 	return "ok"
 end
 
+function digCube(x, y, z, noreturn)
+	local dir = z < 0 and "down" or "up"
+	z = math.abs(z)
+	for i = 1, z do
+		if (i > 1) then
+			dig(dir)
+			move("left", 2)
+		end
+		digPlane(x, y, not(i == z and not noreturn))
+		x = x % 2 > 0 and x or -x
+	end
+	if (not noreturn) then
+		move(opposite(dir), z - 1)
+	end
+end
+
 function place(dir, slot)
 	if (not domap[dir]) then return "wrong direction" end
 	if (slot) then turtle.select(slot) end
@@ -150,4 +166,22 @@ function placePlane(x, y, dir, noreturn)
 		move(tdir)
 	end
 	return "ok"
+end
+
+function placeCube(x, y, z, noreturn)
+	local dir = z < 0 and "down" or "up"
+	z = math.abs(z)
+	for i = 1, z do
+		if (i > 1) then
+			move("left", 2)
+		end
+		move(dir)
+		placePlane(x, y, "down", not(i == z and not noreturn))
+		x = x % 2 > 0 and x or -x		
+	end
+	if (not noreturn) then
+		move("back")
+		move(opposite(dir), z)
+	end
+	
 end

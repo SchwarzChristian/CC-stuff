@@ -179,7 +179,7 @@ function trtCtrl()
 	function tmp.onInteract() sendDo("trt.digPlane(" .. param.px.value .. "," .. param.py.value .. ")") end
 	funcs:add(tmp)
 	
-	local tmp = Label.new("don't use: dig cube (x, y, z)", 1, 3)
+	local tmp = Label.new("dig cube (x, y, z)", 1, 3)
 	function tmp.onInteract() sendDo("trt.digCube(" .. param.px.value .. "," .. param.py.value .. "," .. 
 											param.pz.value .. ")") end
 	funcs:add(tmp)
@@ -192,7 +192,7 @@ function trtCtrl()
 	function tmp.onInteract() sendDo("trt.placePlane(" .. param.px.value .. "," .. param.py.value .. ")") end
 	funcs:add(tmp)
 	
-	local tmp = Label.new("don't use: place cube (x, y, z)", 1, 6)
+	local tmp = Label.new("place cube (x, y, z)", 1, 6)
 	function tmp.onInteract() sendDo("trt.placeCube(" .. param.px.value .. "," .. param.py.value .. "," .. 
 											param.pz.value .. ")") end
 	funcs:add(tmp)
@@ -200,11 +200,11 @@ function trtCtrl()
 	function getInv()
 		sock:sendAcked("getInv")
 		local tmp = sock:recv()
-		w.title.text = name .. " - " .. sock.name .. " (" .. tmp.dist .. ")"
 		if (not tmp.msg) then
 			w.exit = true
 			return
 		end
+		w.title.text = name .. " - " .. sock.name .. " (" .. tmp.dist .. ")"
 		local i = 1
 		for y = 1, 7, 2 do
 			for x = 1, 10, 3 do

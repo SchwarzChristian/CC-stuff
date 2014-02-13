@@ -23,7 +23,6 @@ function new(x, y, width, height)
 	end
 
 	function tmp:touch(x, y)
-		log:write(x .. "," .. y, "touch")
 		-- if x, y defines a point inside the components bounds
 		if (x >= self.x  and y >= self.y and x < self.x + self.width and y < self.y + self.height) then
 			self:onTouch(x - self.x + 1, y - self.y + 1)
