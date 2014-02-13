@@ -1,0 +1,78 @@
+version = "1.0"
+name = "SpinEdit"
+local log = Log.new(name .. ".log")
+
+-- class SpinEdit
+SpinEdit = {}
+SpinEdit.__index = SpinEdit
+
+function new(x, y, width, value)
+	local tmp = Component.new(x, y, width or 2, 3)
+	setmetatable(tmp, SpinEdit)
+	tmp.fgColor = Window.fgColor
+	tmp.bgColor = Window.bgColor
+	tmp.value = type(value) == "number" and value or 0
+	tmp.min = 0
+	tmp.max = 10 ^ tmp.width - 1
+	tmp.allowNegative = true
+	tmp.wrapping = false
+
+	local s = tmp.width % 2 > 0 and " " or "" 
+	for _ = 1, tmp.width / 2 do
+		s = s .. "/\\"
+	end
+	tmp.up = Label.new(s, tmp.x, tmp.y)
+	
+	s = tmp.width % 2 > 0 and " " or "" 
+	for _ = 1, tmp.width / 2 do
+		s = s .. "\\/"
+	end
+	tmp.down = Label.new(s, tmp.x, tmp.y + 2)
+		
+	function tmp:onInteract(x, y)
+		if (y < 2) then
+			self.value = self.value + 1
+			if (self.allowNegative and self.value < self.min and self.value > -self.min) then
+				self.value = self.min
+			elseif (self.value > self.max) then
+				self.value = self.wrapping and (self.allowNegative and -self.max or self.min)
+											or self.max
+			end
+		elseif (y > 2) then
+			self.value = self.value - 1
+			if (self.allowNegative and self.value < self.min and self.value > -self.min) then
+				self.value = -self.min
+			elseif (self.value < (self.allowNegative and -self.max or self.min)) then
+				self.value = self.wrapping and self.max or self.min
+			end
+		end
+	end
+
+	function tmp:draw(out)
+		local s = self.value < 0 and "-" or " "
+		local x = math.abs(self.value)
+		out:setCursorPos(self.x, self.y + 1)
+		out:setTextColor(self.fgColor)
+		out:setBackgroundColor(self.bgColor)
+		
+		for i = self.width - 2, 0, -1 do
+			if (i > 0 and x < 10 ^ i) then 
+				s = s .. " "
+			else 
+				s = s .. math.floor(x / 10 ^ i % 10)
+			end
+		end
+		out:write(s)
+
+		self.up:draw(out)
+		self.down:draw(out)
+		
+		_ = self.onDraw and self:onDraw(out)
+	end
+
+	return tmp
+end
+
+-- end class
+
+log:write("version: " .. version)

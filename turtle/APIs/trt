@@ -84,6 +84,8 @@ function digPlane(x, y, noreturn)
 		if (x % 2 > 0) then 
 			move("left", 2)
 			move(nil, y - 1)
+		else
+			tdir = opposite(tdir)
 		end
 		move(tdir)
 		move(nil, x - 1)
@@ -140,6 +142,8 @@ function placePlane(x, y, dir, noreturn)
 		if (x % 2 > 0) then 
 			move("left", 2)
 			move(nil, y - 1)
+		else
+			tdir = opposite(tdir)
 		end
 		move(tdir)
 		move(nil, x - 1)

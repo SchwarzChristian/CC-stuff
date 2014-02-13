@@ -11,6 +11,7 @@ os.loadAPI("/APIs/DrawingPane")
 os.loadAPI("/APIs/Label")
 os.loadAPI("/APIs/Checkbox")
 os.loadAPI("/APIs/Panel")
+os.loadAPI("/APIs/SpinEdit")
 os.loadAPI("/APIs/Window")
 os.loadAPI("/APIs/Socket")
 log:write("set path...")
@@ -18,4 +19,4 @@ shell.setPath("/bin:" .. shell.path())
 log:write("done.")
 
 -- working on:
-shell.run("ctrt")
+shell.run("ctrt top")

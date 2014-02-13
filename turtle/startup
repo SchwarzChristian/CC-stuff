@@ -29,7 +29,10 @@ while true do
 			local success, res = pcall(loadstring("return " .. msg:sub(4)))
 			res = (success and "true" or "false") .. (res and "," .. res or "")
 			write(res .. "\n")
-			rednet.send(id, res)
+			repeat
+				rednet.send(id, res)
+				local rid, rmsg = rednet.receive(3)
+			until (id == rid and rmsg == "ACK")
 		else
 			rednet.send(id, "unknown command: " .. msg);
 		end

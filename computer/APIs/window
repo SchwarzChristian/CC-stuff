@@ -2,17 +2,16 @@ version = "1.0"
 name = "Window"
 local log = Log.new(name .. ".log")
 
-fgColor, bgColor = colors.white, colors.black
+fgColor, bgColor = colors.lime, colors.black
 
 -- class Window
 Window = {}
 Window.__index = Window
 
-function new(out, title)
-	local tmp = Component.new()
+function new(out, title, x, y, width, height)
+	local tmp = Component.new(x, y, width or 51, height or 19)
 	setmetatable(tmp, Window)
 	tmp.title = Label.new(title)
-	tmp.width, tmp.height = 51, 19
 	tmp.fgColor, tmp.bgColor = fgColor, bgColor
 	tmp.out = out
 	tmp.drawingPane = DrawingPane.new(out, tmp.x + 1, tmp.y  + 3, tmp.width - 2, tmp.height - 4, true)
@@ -74,10 +73,10 @@ function new(out, title)
 		out.write("+")
 		self:nl(self.x)
 
-		self.title:draw(DrawingPane.new(out, 3, 2, self.width - 4, 1, true))
+		self.title:draw(DrawingPane.new(out, self.x + 2, self.x + 1, self.width - 4, 1, true))
 		
 		for _, comp in ipairs(self.comp) do
-			comp:draw(self.drawingPane)
+			if (comp.show) then comp:draw(self.drawingPane) end
 		end
 		_ = self.onDraw and self:onDraw(self.drawingPane)
 	end
@@ -87,18 +86,24 @@ function new(out, title)
 		while not self.exit do
 			self:draw(self.out)
 			local e, p1, p2, p3, p4, p5 = os.pullEvent()
+			log:write(tostring(e) .. ", " .. tostring(p1) .. ", " .. tostring(p2) .. ", " .. 
+						tostring(p3) .. ", " .. tostring(p4) .. ", " .. tostring(p5), "event")
 			if (e == "monitor_touch") then
 				if (p2 - self.x == self.width - 2 and p3 - self.y == 1) then self.exit = true
-				elseif (not (self.onTouch and self:onTouch(p1, p2, p3))) then
+				elseif (not (self.onTouch and self:onTouch(p2, p3))) then
 					for _, comp in ipairs(self.comp) do
-						_ = comp.onTouch and comp:touch(p1, p2 - self.drawingPane.x, p3 - self.drawingPane.y)
+						if (comp.show) then
+							comp:touch(p2 - self.drawingPane.x + 1, p3 - self.drawingPane.y + 1)
+						end
 					end
 				end
 			elseif (e == "mouse_click") then
 				if (p2 - self.x == self.width - 2 and p3 - self.y == 1) then self.exit = true
 				elseif (not (self.onClick and self:onClick(p1, p2, p3))) then
 					for _, comp in ipairs(self.comp) do
-						_ = comp.onClick and comp:click(p1, p2 - self.drawingPane.x, p3 - self.drawingPane.y)
+						if (comp.show) then
+							comp:click(p1, p2 - self.drawingPane.x, p3 - self.drawingPane.y)
+						end
 					end
 				end
 			elseif (e == "timer") then

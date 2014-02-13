@@ -3,41 +3,47 @@ name = "Turtle Control"
 
 local args = {...}
 
-local MODEM_SITE = "right"
 local log = Log.new(name .. ".log")
 local debug = Log.new(nil, name)
+
+local MODEM_SITE = "right"
 local sock = Socket.new()
+local ox, oy = 1, 1
 sock.timeout = 1
 
+log:write("version: " .. version)
+
+-- determine the output device
 if (#args > 0) then
 	out = peripheral.wrap(args[1])
 	out.setTextScale(0.5)
+--	ox, oy = 4, 4
 else
 	out = term
 end
 
-log:write("version: " .. version)
-
+-- show all reachable turtles
 function trtList()
-	local w = Window.new(out, name .. " - reachable tutrles")
+	local w = Window.new(out, name .. " - reachable tutrles", ox, oy)
 	w:clear()
 	sock:disconnect()
 	
 	function getList()
 		local i = 1
+		-- remove old entries
 		for _, c in ipairs(w.comp) do
 			c:remove()
 		end
 		write("ping turtles...\n")
-		repeat
+		repeat -- repeat pinging until at least one turtle answers
 			sock:send("helo")
-			repeat
+			repeat -- repeat until a turtle answers
 				local tmp = sock:recv()
-				if (tmp.id) then
+				if (tmp.id) then -- if not timed out
 					write(tmp.id .. " - " .. tmp.msg .. "\n")
 					l = Label.new(tmp.msg .. " (" .. tmp.dist .. ")", 1, i)
 					l.trtID = tmp.id
-					function l:onInteract()
+					function l:onInteract() -- player select a turtle
 						sock:connect(self.trtID)
 						sock.name = self.text:sub(1, self.text:find(" ", 1) - 1)
 						trtCtrl()
@@ -54,56 +60,86 @@ function trtList()
 	w:loop()
 end
 
+-- control window
 function trtCtrl()
-	local w = Window.new(out, name .. " - " .. sock.name)
-	local inv = Panel.new(w.drawingPane.width - 11, 1, 12, 8)
+	local w = Window.new(out, name .. " - " .. sock.name, ox, oy)
+	local inv = Panel.new(1, 1, 12, 8)
+	local param = Panel.new(w.drawingPane.width - 21, w.drawingPane.height - 3, 22, 4)
+	local funcs = Panel.new(w.drawingPane.width - 20, 1, 21, w.drawingPane.height - 3)
 	local l = {}
-	local dig = Checkbox.new("dig", 1, 3)
-	local ctrl = {}
+	local dig = Checkbox.new("dig", 10, 11)
+	local ctrl
 	
 	dig.checked = true
 	
-	function sendDo(dir)
-		sock:sendAcked("do trt[\"" .. (dig.checked and "dig" or "move") .. "\"](\"" .. dir .. "\")")
-		local dist = sock:recv().dist
-		if (not dist) then 
-			w.exit = true
-			return 
-		end
-		w.title.text = name .. " - " .. sock.name .. " (" .. dist .. ")"
-		getInv()
+	-- send a command
+	function sendDo(com, dir)
+		local tmp = sock.timeout
+		com = com or "trt[\"" .. (dig.checked and "dig" or "move") .. "\"](\"" .. dir .. "\")"
+		sock:sendAcked("do " .. com)
+		sock.timeout = nil
+		sock:recvAcked() -- ack the result
+		sock.timeout = tmp
+		getInv() -- update inventory data
 	end
 	
-	ctrl[1] = Label.new("+", 1, 1)
-	ctrl[1].onInteract = function() sendDo("up") end
-	w:add(ctrl[1])
+	-- build control labels
+	ctrl = Label.new("++", 1, 11)
+	ctrl.onInteract = function() sendDo(nil, "up") end
+	w:add(ctrl)
 	
-	ctrl[2] = Label.new("/\\", 2, 1)
-	ctrl[2].onInteract = function() sendDo("forw") end
-	w:add(ctrl[2])
+	ctrl = Label.new("++", 1, 12)
+	ctrl.onInteract = function() sendDo(nil, "up") end
+	w:add(ctrl)
 	
-	ctrl[3] = Label.new("-", 4, 1)
-	ctrl[3].onInteract = function() sendDo("down") end
-	w:add(ctrl[3])
+	ctrl = Label.new("/\\", 4, 11)
+	ctrl.onInteract = function() sendDo(nil, "forw") end
+	w:add(ctrl)
 	
-	ctrl[4] = Label.new("<", 1, 2)
-	ctrl[4].onInteract = function() sendDo("left") end
-	w:add(ctrl[4])
+	ctrl = Label.new("/\\", 4, 12)
+	ctrl.onInteract = function() sendDo(nil, "forw") end
+	w:add(ctrl)
 	
-	ctrl[5] = Label.new("\\/", 2, 2)
-	ctrl[5].onInteract = function() sendDo("back") end
-	w:add(ctrl[5])
+	ctrl = Label.new("--", 7, 11)
+	ctrl.onInteract = function() sendDo(nil, "down") end
+	w:add(ctrl)
 	
-	ctrl[6] = Label.new(">", 4, 2)
-	ctrl[6].onInteract = function() sendDo("right") end
-	w:add(ctrl[6])
+	ctrl = Label.new("--", 7, 12)
+	ctrl.onInteract = function() sendDo(nil, "down") end
+	w:add(ctrl)
+	
+	ctrl = Label.new("//", 1, 14)
+	ctrl.onInteract = function() sendDo(nil, "left") end
+	w:add(ctrl)
+	
+	ctrl = Label.new("\\\\", 1, 15)
+	ctrl.onInteract = function() sendDo(nil, "left") end
+	w:add(ctrl)
+	
+	ctrl = Label.new("\\/", 4, 14)
+	ctrl.onInteract = function() sendDo(nil, "back") end
+	w:add(ctrl)
+	
+	ctrl = Label.new("\\/", 4, 15)
+	ctrl.onInteract = function() sendDo(nil, "back") end
+	w:add(ctrl)
+	
+	ctrl = Label.new("\\\\", 7, 14)
+	ctrl.onInteract = function() sendDo(nil, "right") end
+	w:add(ctrl)
+	
+	ctrl = Label.new("//", 7, 15)
+	ctrl.onInteract = function() sendDo(nil, "right") end
+	w:add(ctrl)
 	
 	w:add(dig)
 	
+	-- borders
 	for y = 2, 8, 2 do
-		inv:add(Label.new("+--+--+--+--", 1, y))
+		inv:add(Label.new("--+--+--+--+", 1, y))
 	end
 
+	-- inventory labels
 	local i = 1
 	for y = 1, 7, 2 do
 		for x = 1, 10, 3 do
@@ -113,21 +149,70 @@ function trtCtrl()
 		end
 	end
 
+	-- build parameter panel
+	param:add(Label.new("+------+------+-------", 1, 1))
+	param:add(Label.new("|", 1, 2))
+	param:add(Label.new("|x:", 1, 3))
+	param:add(Label.new("|", 1, 4))
+	param:add(Label.new("|", 8, 2))
+	param:add(Label.new("|y:", 8, 3))
+	param:add(Label.new("|", 8, 4))
+	param:add(Label.new("|", 15, 2))
+	param:add(Label.new("|z:", 15, 3))
+	param:add(Label.new("|", 15, 4))
+	param.px = SpinEdit.new(4, 2, 4, 2)
+	param.py = SpinEdit.new(11, 2, 4, 2)
+	param.pz = SpinEdit.new(18, 2, 4, 2)
+	param.px.min = 2
+	param.py.min = 2
+	param.pz.min = 2
+	param:add(param.px)
+	param:add(param.py)
+	param:add(param.pz)
+	
+	-- build function list
+	local tmp = Label.new("dig line (y)", 1, 1)
+	function tmp.onInteract() sendDo("trt.digLine(" .. param.py.value .. ")") end
+	funcs:add(tmp)
+	
+	local tmp = Label.new("dig plane (x, y)", 1, 2)
+	function tmp.onInteract() sendDo("trt.digPlane(" .. param.px.value .. "," .. param.py.value .. ")") end
+	funcs:add(tmp)
+	
+	local tmp = Label.new("don't use: dig cube (x, y, z)", 1, 3)
+	function tmp.onInteract() sendDo("trt.digCube(" .. param.px.value .. "," .. param.py.value .. "," .. 
+											param.pz.value .. ")") end
+	funcs:add(tmp)
+		
+	local tmp = Label.new("place line (y)", 1, 4)
+	function tmp.onInteract() sendDo("trt.placeLine(nil, " .. param.py.value .. ")") end
+	funcs:add(tmp)
+	
+	local tmp = Label.new("place plane (x, y)", 1, 5)
+	function tmp.onInteract() sendDo("trt.placePlane(" .. param.px.value .. "," .. param.py.value .. ")") end
+	funcs:add(tmp)
+	
+	local tmp = Label.new("don't use: place cube (x, y, z)", 1, 6)
+	function tmp.onInteract() sendDo("trt.placeCube(" .. param.px.value .. "," .. param.py.value .. "," .. 
+											param.pz.value .. ")") end
+	funcs:add(tmp)
+		
 	function getInv()
 		sock:sendAcked("getInv")
-		local msg = sock:recv().msg
-		if (not msg) then
+		local tmp = sock:recv()
+		w.title.text = name .. " - " .. sock.name .. " (" .. tmp.dist .. ")"
+		if (not tmp.msg) then
 			w.exit = true
 			return
 		end
 		local i = 1
 		for y = 1, 7, 2 do
 			for x = 1, 10, 3 do
-				local x = msg:find(",", 1)
-				local s = msg:sub(1, x - 1)
+				local x = tmp.msg:find(",", 1)
+				local s = tmp.msg:sub(1, x - 1)
 				if (#s < 2) then s = " " .. s end
-				msg = msg:gsub("%d+,", "", 1)
-				l[i].text = "|" .. s
+				tmp.msg = tmp.msg:gsub("%d+,", "", 1)
+				l[i].text = s .. "|"
 				i = i + 1
 			end
 		end
@@ -136,6 +221,8 @@ function trtCtrl()
 	getInv()
 	
 	w:add(inv)
+	w:add(param)
+	w:add(funcs)
 	w:loop()
 end
 

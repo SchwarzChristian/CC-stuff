@@ -7,7 +7,7 @@ DrawingPane = {}
 DrawingPane.__index = DrawingPane
 
 function new(parentPane, x, y, width, height, top)
-	tmp = Component.new(x - 1, y - 1, width, height)
+	tmp = Component.new(x, y, width, height)
 	setmetatable(tmp, DrawingPane)
 	tmp.parentPane = parentPane
 	tmp.top = top
@@ -18,19 +18,20 @@ function new(parentPane, x, y, width, height, top)
 		else
 			x, y = self.parentPane:getCursorPos()
 		end
-		return x - self.x, y - self.y
+		return x - self.x + 1, y - self.y + 1
 	end
 	
 	function tmp:setCursorPos(x, y)
 		x, y = self.x + math.min(math.max(x, 1), self.width), self.y + math.min(math.max(y, 1), self.height)
 		if (self.top) then
-			self.parentPane.setCursorPos(x, y)
+			self.parentPane.setCursorPos(x - 1, y - 1)
 		else
-			self.parentPane:setCursorPos(x, y)
+			self.parentPane:setCursorPos(x - 1, y - 1)
 		end
 	end
 
 	function tmp:write(text)
+		text = tostring(text)
 --		if (not self.top) then return self.parentPane:write(text) end
 		local x, y = self:getCursorPos()
 		if (y < 1 or y > self.height) then return end

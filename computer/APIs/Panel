@@ -29,6 +29,22 @@ function new(x, y, width, height)
 		end
 	end
 	
+	function tmp:onTouch(x, y)
+		for _, comp in ipairs(self.comp) do
+			if (comp.show) then
+				comp:touch(x, y)
+			end		
+		end
+	end
+	
+	function tmp:onClick(button, x, y)
+		for _, comp in ipairs(self.comp) do
+			if (comp.show) then
+				comp:click(button, x, y)
+			end		
+		end
+	end
+	
 	return tmp
 end
 
