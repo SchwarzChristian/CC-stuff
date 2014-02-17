@@ -108,7 +108,7 @@ function new(out, title, x, y, width, height)
 				end
 			elseif (e == "timer") then
 				_ = self.onTime and self:onTime(p1)
-			elseif (e == "rednet") then
+			elseif (e == "rednet_message") then
 				_ = self.onRednetRecv and self:onRednetRecv(p1, p2, p3)
 			end
 		end

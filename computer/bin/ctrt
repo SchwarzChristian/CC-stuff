@@ -36,18 +36,19 @@ function trtList()
 		end
 		write("ping turtles...\n")
 		repeat -- repeat pinging until at least one turtle answers
-			sock:send("helo")
+			sock:sendAcked("helo:helo")
 			repeat -- repeat until a turtle answers
 				local tmp = sock:recv()
 				if (tmp.id) then -- if not timed out
 					if (tmp.msg:find("helo:") == 1) then 
 						tmp.msg = tmp.msg:gsub("helo:", "")
 						write(tmp.id .. " - " .. tmp.msg .. "\n")
-						l = Label.new(tmp.msg .. " (" .. tmp.dist .. ")", 1, i)
+						l = Label.new(tmp.msg .. " (" .. math.floor(tmp.dist * 10 + 0.5) / 10 .. 
+										")", 1, i)
 						l.trtID = tmp.id
 						function l:onInteract() -- player select a turtle
 							sock:connect(self.trtID)
-							sock.name = self.text:sub(1, self.text:find(" ", 1) - 1)
+							sock.name = self.text:sub(1, self.text:find(" %(", 1) - 1)
 							trtCtrl()
 							getList()
 						end
@@ -72,6 +73,7 @@ function trtCtrl()
 	local l = {}
 	local dig = Checkbox.new("dig", 10, 11)
 	local ctrl
+	local status = "unknown"
 	
 	dig.checked = true
 	
@@ -210,7 +212,6 @@ function trtCtrl()
 				return
 			end
 		end
-		w.title.text = name .. " - " .. sock.name .. " (" .. tmp.dist .. ")"
 		if (not tmp.msg:find("update:")) then return end
 		tmp.msg = tmp.msg:gsub("update:", "")
 		local i = 1
@@ -228,13 +229,19 @@ function trtCtrl()
 	
 	-- handle rednet messages
 	function w:onRednetRecv(id, msg, dist)
-		if (id == socket.target) then
+		if (id == sock.target) then
 			if (msg:find("update:") == 1) then
+				log:write("update")
 				getInv({msg = msg, dist = dist})
 			elseif (msg:find("result:") == 1) then
 				sock:send("ACK")
 				log:write(msg, "result")
+			elseif (msg:find("status:") == 1) then
+				status = msg:sub(8)
+				log:write(status, "status")
 			end
+			w.title.text = name .. " - " .. sock.name .. 
+							" (" .. math.floor(dist * 10 + 0.5) / 10 .. ") - " .. status
 		end
 	end
 	

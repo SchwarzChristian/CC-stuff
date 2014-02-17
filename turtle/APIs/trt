@@ -55,7 +55,7 @@ function detect(dir)
 	return turtle["detect" .. domap[dir]]()
 end
 
-function dig(dir, steps, dontmove)
+function dig(dir, steps)
 	dir = dir or "forw"
 	if (not domap[dir]) then 
 		if (dontmove) then return "wrong direction" end
