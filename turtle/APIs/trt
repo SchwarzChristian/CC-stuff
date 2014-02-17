@@ -28,6 +28,21 @@ function opposite(dir)
 	return tmp[dir or "forw"]
 end
 
+function sendUpdate(target)
+	local s = "update:"
+	for i = 1, 16 do
+		s = s .. turtle.getItemCount(i) .. ","
+	end
+	-- remove last ','
+	s:reverse():gsub(",", "", 1):reverse()
+	if (target) then
+		rednet.send(target, s)
+	else
+		rednet.broadcast(s)
+	end
+	write(s .. "\n")
+end
+
 function move(dir, steps)
 	if (dir and not movemap[dir]) then return "illegal direction" end
 	for i = 1, steps or 1 do turtle[movemap[dir or "forw"]]() end
@@ -53,6 +68,7 @@ function dig(dir, steps, dontmove)
 		end
 		if (not dontmove) then move(dir) end
 	end
+	sendUpdate()
 	return "ok"
 end
 

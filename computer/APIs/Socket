@@ -2,7 +2,6 @@ version = "1.0"
 name = "Socket"
 
 local log = Log.new(name .. ".log")
-local ignore = {ready = true, busy = true}
 
 -- class Socket
 Socket = {}
@@ -42,7 +41,8 @@ function new(target)
 				log:write("timeout", "recv")
 				return { time = os.clock() - start } 
 			end
-		until (msg and (noignore or not ignore[msg]) and (not self.target or id == self.target))
+		until (msg and (noignore or not (msg:find("status:") == 1)) and 
+						(not self.target or id == self.target))
 		log:write(id .. ": " .. msg, "recv")
 		return {msg = msg, dist = dist, time = os.clock() - start, id = id}
 	end
@@ -58,7 +58,9 @@ function new(target)
 	end
 	
 	function tmp:recvAcked(noignore)
-		self:send("ACK", self:recv(noignore).id)
+		local tmp = self:recv(noignore)
+		if (tmp.msg) then self:send("ACK", tmp.id) end
+		return tmp
 	end
 	
 	return tmp	

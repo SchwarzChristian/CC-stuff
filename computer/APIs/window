@@ -102,12 +102,14 @@ function new(out, title, x, y, width, height)
 				elseif (not (self.onClick and self:onClick(p1, p2, p3))) then
 					for _, comp in ipairs(self.comp) do
 						if (comp.show) then
-							comp:click(p1, p2 - self.drawingPane.x, p3 - self.drawingPane.y)
+							comp:click(p1, p2 - self.drawingPane.x + 1, p3 - self.drawingPane.y + 1)
 						end
 					end
 				end
 			elseif (e == "timer") then
 				_ = self.onTime and self:onTime(p1)
+			elseif (e == "rednet") then
+				_ = self.onRednetRecv and self:onRednetRecv(p1, p2, p3)
 			end
 		end
 		_ = self.onEnd and self:onEnd()

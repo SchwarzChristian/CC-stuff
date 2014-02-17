@@ -2,39 +2,34 @@ os.loadAPI("/APIs/trt")
 
 rednet.open("right");
 
-local ignore = {ready = true, busy = true}
-
 while true do
 	local id, msg
-	rednet.broadcast("ready")
+	rednet.broadcast("status:ready")
+	write("status:ready\n")
 	repeat
 		id, msg = rednet.receive()
-	until (not ignore[msg]) -- leave loop if msg should not be ignored
-	rednet.broadcast("busy")
-	write(id .. ": " .. (msg or "<nil/false>") .. "\n")
+		write(id .. ": " .. (msg or "<nil/false>") .. "\n")
+	until (not (msg:find("status:") == 1)) -- leave loop if msg is no status update
+	rednet.broadcast("status:busy")
+	write("status:busy\n")
 	if (type(msg) == "string") then
 		if (msg:find("helo") == 1) then
-			rednet.send(id, "Mining Turtle");
+			rednet.send(id, "helo:Mining Turtle")
+			write("helo:Mining Turtle\n")
 		elseif (msg:find("getInv") == 1) then
 			rednet.send(id, "ACK")
-			local s = ""
-			for i = 1, 16 do
-				s = s .. turtle.getItemCount(i) .. ","
-			end
-			-- remove last ','
-			s:reverse():gsub(",", "", 1):reverse()
-			rednet.send(id, s)
+			trt.sendUpdate(id)
 		elseif (msg:find("do ") == 1) then
 			rednet.send(id, "ACK")
 			local success, res = pcall(loadstring("return " .. msg:sub(4)))
-			res = (success and "true" or "false") .. (res and "," .. res or "")
+			res = "result:" .. (success and "true" or "false") .. (res and "," .. res or "")
 			write(res .. "\n")
 			repeat
 				rednet.send(id, res)
 				local rid, rmsg = rednet.receive(3)
 			until (id == rid and rmsg == "ACK")
 		else
-			rednet.send(id, "unknown command: " .. msg);
+			rednet.send(id, "result:false,unknown command: " .. msg);
 		end
 	end
 end

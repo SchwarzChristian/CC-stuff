@@ -40,17 +40,20 @@ function trtList()
 			repeat -- repeat until a turtle answers
 				local tmp = sock:recv()
 				if (tmp.id) then -- if not timed out
-					write(tmp.id .. " - " .. tmp.msg .. "\n")
-					l = Label.new(tmp.msg .. " (" .. tmp.dist .. ")", 1, i)
-					l.trtID = tmp.id
-					function l:onInteract() -- player select a turtle
-						sock:connect(self.trtID)
-						sock.name = self.text:sub(1, self.text:find(" ", 1) - 1)
-						trtCtrl()
-						getList()
+					if (tmp.msg:find("helo:") == 1) then 
+						tmp.msg = tmp.msg:gsub("helo:", "")
+						write(tmp.id .. " - " .. tmp.msg .. "\n")
+						l = Label.new(tmp.msg .. " (" .. tmp.dist .. ")", 1, i)
+						l.trtID = tmp.id
+						function l:onInteract() -- player select a turtle
+							sock:connect(self.trtID)
+							sock.name = self.text:sub(1, self.text:find(" ", 1) - 1)
+							trtCtrl()
+							getList()
+						end
+						w:add(l)
+						i = i + 1
 					end
-					w:add(l)
-					i = i + 1
 				end
 			until (not tmp.id)
 		until (#w.comp > 0)
@@ -75,12 +78,10 @@ function trtCtrl()
 	-- send a command
 	function sendDo(com, dir)
 		local tmp = sock.timeout
+		local data
 		com = com or "trt[\"" .. (dig.checked and "dig" or "move") .. "\"](\"" .. dir .. "\")"
+		log:write(com, "command")
 		sock:sendAcked("do " .. com)
-		sock.timeout = nil
-		sock:recvAcked() -- ack the result
-		sock.timeout = tmp
-		getInv() -- update inventory data
 	end
 	
 	-- build control labels
@@ -143,7 +144,7 @@ function trtCtrl()
 	local i = 1
 	for y = 1, 7, 2 do
 		for x = 1, 10, 3 do
-			l[i] = Label.new("| 0", x, y)
+			l[i] = Label.new("  |", x, y)
 			inv:add(l[i])
 			i = i + 1
 		end
@@ -197,23 +198,42 @@ function trtCtrl()
 											param.pz.value .. ")") end
 	funcs:add(tmp)
 		
-	function getInv()
-		sock:sendAcked("getInv")
-		local tmp = sock:recv()
-		if (not tmp.msg) then
-			w.exit = true
-			return
+	function getInv(update)
+		local tmp
+		if (update) then
+			tmp = update
+		else
+			sock:sendAcked("getInv")
+			tmp = sock:recv()
+			if (not tmp.msg) then
+				w.exit = true
+				return
+			end
 		end
 		w.title.text = name .. " - " .. sock.name .. " (" .. tmp.dist .. ")"
+		if (not tmp.msg:find("update:")) then return end
+		tmp.msg = tmp.msg:gsub("update:", "")
 		local i = 1
 		for y = 1, 7, 2 do
 			for x = 1, 10, 3 do
-				local x = tmp.msg:find(",", 1)
+				local x = tmp.msg:find(",")
 				local s = tmp.msg:sub(1, x - 1)
 				if (#s < 2) then s = " " .. s end
 				tmp.msg = tmp.msg:gsub("%d+,", "", 1)
 				l[i].text = s .. "|"
 				i = i + 1
+			end
+		end
+	end
+	
+	-- handle rednet messages
+	function w:onRednetRecv(id, msg, dist)
+		if (id == socket.target) then
+			if (msg:find("update:") == 1) then
+				getInv({msg = msg, dist = dist})
+			elseif (msg:find("result:") == 1) then
+				sock:send("ACK")
+				log:write(msg, "result")
 			end
 		end
 	end
