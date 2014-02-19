@@ -16,6 +16,8 @@ local movemap = {
 	down  = "down"
 }
 
+local progress, progressTarget = 0
+
 function opposite(dir)
 	local tmp = {
 		forw  = "back", 
@@ -30,56 +32,98 @@ end
 
 function sendUpdate(target)
 	local s = "update:"
+
 	for i = 1, 16 do
 		s = s .. turtle.getItemCount(i) .. ","
 	end
-	-- remove last ','
-	s:reverse():gsub(",", "", 1):reverse()
+
+	if (progressTarget) then
+		s = s .. math.min(100, math.floor(progress / progressTarget * 1000 + 0.5) / 10)
+	else
+		-- remove last ','
+		s:reverse():gsub(",", "", 1):reverse()
+	end
+
 	if (target) then
 		rednet.send(target, s)
 	else
 		rednet.broadcast(s)
 	end
-	write(s .. "\n")
 end
 
 function move(dir, steps)
 	if (dir and not movemap[dir]) then return "illegal direction" end
-	for i = 1, steps or 1 do turtle[movemap[dir or "forw"]]() end
+	if (steps and (steps < 0)) then dir = opposite(dir) end
+	steps = math.abs(steps or 1)
+	
+	for i = 1, steps or 1 do 
+		if (domap[dir]) then
+			turtle["attack" .. domap[dir]]()
+			turtle["attack" .. domap[dir]]()
+		end
+		turtle[movemap[dir or "forw"]]()
+	end
+	if (domap[dir]) then 
+		progress = progress + (steps or 1)
+	end
 	return "ok"
 end
 
 function detect(dir)
 	dir = dir or "forw"
+
 	if (not domap[dir]) then return end
+
 	return turtle["detect" .. domap[dir]]()
 end
 
-function dig(dir, steps)
+function dig(dir, steps, nosec)
 	dir = dir or "forw"
+
+	local trackProgress = false
+
 	if (not domap[dir]) then 
 		if (dontmove) then return "wrong direction" end
 		return move(dir)
 	end
+
+	if (not progressTarget and steps) then
+		trackProgress = true
+		progressTarget = steps
+	end
+
 	for i = 1, steps or 1 do
 		while (detect(dir)) do 
 			turtle["dig" .. domap[dir]]()
-			if (dir ~= "down") then os.sleep(0.5) end
+			if (dir ~= "down" and not nosec) then os.sleep(0.5) end
 		end
+		sendUpdate()
 		if (not dontmove) then move(dir) end
 	end
-	sendUpdate()
+
+	if (trackProgress) then
+		progress, progressTarget = 0, nil
+	end
+	
 	return "ok"
 end
 
-function digLine(steps)
-	return dig(nil, steps or 1)
+function digLine(steps, nosec)
+	return dig(nil, steps or 1, nosec)
 end
 
-function digPlane(x, y, noreturn)
+function digPlane(x, y, noreturn, nosec)
+	local trackProgress = false
+
 	if (not (x or y) or (x >= -1 and x <= 1) or (y >= -1 and y <= 1)) then
 		return "coordinate to close! (min: 2x2)"
 	end
+
+	if (not progressTarget) then
+		trackProgress = true
+		progressTarget = x * y
+	end
+
 	local tdir = x > 0 and "right" or "left"
 	x = math.abs(x)
 	if (y < 0) then 
@@ -87,15 +131,17 @@ function digPlane(x, y, noreturn)
 		tdir = opposite(tdir)
 		y = 0 - y
 	end
+
 	for i = 1, x do
 		if (i > 1) then
 			move(tdir)
-			dig()
+			dig(nil, nil, nosec)
 			move(tdir)
 			tdir = opposite(tdir)
 		end
-		digLine(y - 1)
+		digLine(y - 1, nosec)
 	end
+
 	if (not noreturn) then
 		if (x % 2 > 0) then 
 			move("left", 2)
@@ -107,34 +153,106 @@ function digPlane(x, y, noreturn)
 		move(nil, x - 1)
 		move(tdir)
 	end
+
+	if (trackProgress) then
+		progress, progressTarget = 0, nil
+	end
+	
 	return "ok"
 end
 
 function digCube(x, y, z, noreturn)
-	local dir = z < 0 and "down" or "up"
-	z = math.abs(z)
-	for i = 1, z do
+	local nosec = true
+	local trackProgress = false
+	local lx
+	local negy
+	local xgty
+
+	if (math.abs(x) > math.abs(y)) then
+		local tmp = x
+		xgty = true
+		x = -y
+		y = tmp
+		move("right")
+	end
+	
+	if (y < 0) then
+		negy = true
+		y = -y
+		x = -x
+		move("left", 2)
+	end
+	
+	lx = x
+	
+	if (z > 0) then
+		for _ = 2, z do dig("up") end
+	end
+	
+	if (not progressTarget) then
+		trackProgress = true
+		progress, progressTarget = 0, math.abs(x * y * z) - 1
+	end
+
+	for i = 1, math.abs(z) do
 		if (i > 1) then
-			dig(dir)
+			dig("down")
 			move("left", 2)
 		end
-		digPlane(x, y, not(i == z and not noreturn))
-		x = x % 2 > 0 and x or -x
+		digPlane(lx, y, true)
+		lx = lx % 2 > 0 and lx or -lx
+		nosec = false
 	end
+
 	if (not noreturn) then
-		move(opposite(dir), z - 1)
+		if (z % 2 > 0) then
+			if (x % 2 > 0) then
+				move("back", y - 1)
+				move("left")
+			else
+				move("right")
+			end
+			move("forw", x > 0 and (x - 1) or (x + 1))
+			if (negy) then 
+				move("left")
+			else
+				move("right")
+			end
+		else
+			if (not negy) then move("left", 2) end
+		end
+		if (xgty) then move("left") end
+		if (z < 0) then move("up", math.abs(z) - 1) end
 	end
+	
+	if (trackProgress) then
+		progressTarget = nil
+	end
+	
+	return "ok"
 end
 
 function place(dir, slot)
 	if (not domap[dir]) then return "wrong direction" end
+
 	if (slot) then turtle.select(slot) end
 	turtle["place" .. domap[dir]]()
+	
+	sendUpdate()
+	
 	return detect(dir) and "ok" or "no more items"
 end
 
 function placeLine(dir, steps, slot)
 	dir = dir or "forw"
+
+	local trackProgress = false
+	
+	if (not progressTarget and steps) then
+		trackProgress = true
+		progressTarget = steps
+	end
+
 	if (not domap[dir]) then return "wrong direction" end
 	dig(dir, steps or 1)
 	for i = 1, steps or 1 do
@@ -142,12 +260,26 @@ function placeLine(dir, steps, slot)
 		local s = place(dir, slot)
 		if (s ~= "ok") then return s end
 	end
+
+	if (trackProgress) then
+		progress, progressTarget = 0, nil
+	end
+	
 	return "ok"
 end
 
 function placePlane(x, y, dir, noreturn)
 	dir = dir or "down"
+
+	local trackProgress = false
+	
 	if (dir ~= "up" and dir ~= "down") then return "illegal direction" end
+
+	if (not progressTarget) then
+		trackProgress = true
+		progressTarget = x * y
+	end
+
 	local tdir = x > 0 and "right" or "left"
 	x = math.abs(x)
 	if (y < 0) then 
@@ -155,6 +287,7 @@ function placePlane(x, y, dir, noreturn)
 		tdir = opposite(tdir)
 		y = 0 - y
 	end
+
 	for i = 1, x do
 		if (i > 1) then
 			move(tdir)
@@ -167,9 +300,15 @@ function placePlane(x, y, dir, noreturn)
 				dig()
 			end
 			local s = place(dir)
-			if (s ~= "ok") then return s end
+			if (s ~= "ok") then 
+				if (trackProgress) then
+					progress, progressTarget = 0, nil
+				end	
+				return s 
+			end
 		end
 	end
+
 	if (not noreturn) then
 		if (x % 2 > 0) then 
 			move("left", 2)
@@ -181,11 +320,23 @@ function placePlane(x, y, dir, noreturn)
 		move(nil, x - 1)
 		move(tdir)
 	end
+
+	if (trackProgress) then
+		progress, progressTarget = 0, nil
+	end
+	
 	return "ok"
 end
 
 function placeCube(x, y, z, noreturn)
 	local dir = z < 0 and "down" or "up"
+	local trackProgress = false
+	
+	if (not progressTarget) then
+		trackProgress = true
+		progressTarget = math.abs(x * y * z) - 1
+	end
+
 	z = math.abs(z)
 	for i = 1, z do
 		if (i > 1) then
@@ -195,9 +346,15 @@ function placeCube(x, y, z, noreturn)
 		placePlane(x, y, "down", not(i == z and not noreturn))
 		x = x % 2 > 0 and x or -x		
 	end
+
 	if (not noreturn) then
 		move("back")
 		move(opposite(dir), z)
 	end
 	
+	if (trackProgress) then
+		progress, progressTarget = 0, nil
+	end
+
+	return "ok"
 end

@@ -45,6 +45,8 @@ function new(x, y, width, value)
 			elseif (self.value < (self.allowNegative and -self.max or self.min)) then
 				self.value = self.wrapping and self.max or self.min
 			end
+		elseif (self.allowNegative) then
+			self.value = -self.value
 		end
 	end
 

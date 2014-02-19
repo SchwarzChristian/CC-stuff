@@ -16,7 +16,9 @@ log:write("version: " .. version)
 -- determine the output device
 if (#args > 0) then
 	out = peripheral.wrap(args[1])
-	out.setTextScale(0.5)
+	if (args[2] ~= "full") then
+		out.setTextScale(0.5)
+	end
 --	ox, oy = 4, 4
 else
 	out = term
@@ -220,11 +222,12 @@ function trtCtrl()
 				local x = tmp.msg:find(",")
 				local s = tmp.msg:sub(1, x - 1)
 				if (#s < 2) then s = " " .. s end
-				tmp.msg = tmp.msg:gsub("%d+,", "", 1)
+				tmp.msg = tmp.msg:gsub("%d+,?", "", 1)
 				l[i].text = s .. "|"
 				i = i + 1
 			end
 		end
+		if (#tmp.msg > 0 and status ~= "ready") then status = tmp.msg .. "%" end
 	end
 	
 	-- handle rednet messages
